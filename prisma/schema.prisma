@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id            Int      @id @default(autoincrement())
+  slug          String        @unique
+  title         String
+  description   String?
+  images        String[]      @default([])
+  subcategories Subcategory[]
+  priority      Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  createdBy     String?
+  updatedBy     String?
+}
+
+model Subcategory {
+  id          Int      @id @default(autoincrement())
+  slug        String    @unique
+  title       String
+  description String?
+  images      String[]  @default([])
+  categoryId  Int
+  category    Category  @relation(fields: [categoryId], references: [id])
+  products    Product[]
+  priority    Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   String?
+  updatedBy   String?
+}
+
+model Product {
+  id                  Int      @id @default(autoincrement())
+  sku                 String      @unique
+  skuGroup            String
+  title               String
+  description         String?
+  subcategoryId       Int
+  subcategory         Subcategory @relation(fields: [subcategoryId], references: [id])
+  price               Float
+  stock               Int
+  color               String?
+  size                String?
+  brand               String?
+  warranty            String?
+  specs               Json?
+  images              String[]    @default([])
+  assembly            Float
+  shipping            Json?
+  display             Boolean     @default(true)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  createdBy           String?
+  updatedBy           String?
+}
