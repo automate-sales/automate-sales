@@ -1,8 +1,3 @@
-/* import * as video from './media/chat/video.mp4'
-import * as audio from './media/chat/audio.opus'
-import * as pdf from './media/chat/pdf.pdf'
-import * as image from './media/chat/image.jpg' */
-
 export default [
     {
         "chat_type": "audio",
@@ -10,7 +5,7 @@ export default [
         "whatsapp_id": "B6611423B529AF4607AA0E0E24782B33",
         "phone_number": "50767474627",
         "message_date": 718300102,
-        "media": './media/chat/audio.opus',
+        "media": `${__dirname}/media/chat/audio.opus`,
         "mime_type": "audio/ogg"
     },
     {
@@ -19,7 +14,7 @@ export default [
         "whatsapp_id": "3EB09115044BA110D44013",
         "phone_number": "50767474627",
         "message_date": 718302276,
-        "media": './media/chat/pdf.pdf',
+        "media": `${__dirname}/media/chat/pdf.pdf`,
         "mime_type": "application/pdf",
         "text": "100623OC1_Gabriel Kay.pdf"
     },
@@ -29,7 +24,7 @@ export default [
         "whatsapp_id": "3AF00DE728CFAF4243ED",
         "phone_number": "50767474627",
         "message_date": 718310278,
-        "media": './media/chat/image.jpg',
+        "media": `${__dirname}/media/chat/image.jpg`,
         "mime_type": "image/jpeg"
     },
     {
@@ -38,7 +33,7 @@ export default [
         "whatsapp_id": "3AC9FB73FB80196C7545",
         "phone_number": "50767474627",
         "message_date": 545349586,
-        "media": './media/chat/video.mp4',
+        "media": `${__dirname}/media/chat/video.mp4`,
         "mime_type": "video/mp4"
     },
     {

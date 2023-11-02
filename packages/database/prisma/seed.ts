@@ -2,8 +2,8 @@ import dotenv from 'dotenv';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 dotenv.config({ path: `.env.${NODE_ENV}`});
 
+import { existsSync, readFileSync } from 'fs';
 import { createPublicBucket, wipeS3Bucket } from "sdk/s3";
-
 import {contacts, chats} from "test-data";
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
@@ -18,13 +18,17 @@ async function wipeDatabase() {
 
 async function seedContacts() {
   for(let contact of contacts){
-    console.log('CONATCT ', contact, JSON.stringify(contact, null, 2))
+    console.log('CONATCT ', contact)
   }
 }
 
 async function seedChats() {
   for(let chat of chats){
-    console.log('CHAT ', chat, JSON.stringify(chat, null, 2))
+    console.log('CHAT ', chat)
+    if(chat.media && existsSync(chat.media)){
+      const file = readFileSync(chat.media)
+      console.log('FILE ', file)
+    }
   }
 }
 
