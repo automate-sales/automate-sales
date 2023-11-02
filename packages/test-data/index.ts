@@ -1,4 +1,4 @@
-import contacts from './contacts.json';
+import contacts from './contacts';
 import chats from './chats';
 
 export { 

@@ -11,6 +11,9 @@
     "db:seed": {
       "cache": false
     },
+    "db:studio": {
+      "cache": false
+    },
     "build": {
       "dependsOn": ["^build", "^db:generate"],
       "outputs": [".next/**", "!.next/cache/**"]

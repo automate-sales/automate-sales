@@ -37,6 +37,34 @@ export default [
         "mime_type": "video/mp4"
     },
     {
+        "chat_type": "sticker",
+        "direction": "incoming",
+        "whatsapp_id": "3A6F171193D68BC7C396",
+        "phone_number": "50767474627",
+        "message_date": 557863465,
+        "media": `${__dirname}/media/chat/sticker.mp4`,
+        "mime_type": "video/mp4"
+    },
+    {
+        "chat_type": "sticker",
+        "direction": "incoming",
+        "whatsapp_id": "3AD1DC95CBAF6AD51811",
+        "phone_number": "50767474627",
+        "message_date": 565936875,
+        "media": `${__dirname}/media/chat/sticker.webp`,
+        "mime_type": "image/webp"
+    },
+    {
+        "chat_type": "document",
+        "direction": "outgoing",
+        "whatsapp_id": "3EB0783983DD70659B0A",
+        "phone_number": "50767474627",
+        "message_date": 638138739,
+        "media": `${__dirname}/media/chat/csv.csv`,
+        "mime_type": "text/csv",
+        "text": "new_user_credentials (1).csv"
+    },
+    {
         "chat_type": "location",
         "direction": "incoming",
         "whatsapp_id": "3A4C47850F886ACBC7C9",
@@ -84,33 +112,5 @@ export default [
         "message_date": 555909731.3794751,
         "contact_name": "Rodolfito",
         "contact_phone": "50767477221"
-    },
-    {
-        "chat_type": "sticker",
-        "direction": "incoming",
-        "whatsapp_id": "3A6F171193D68BC7C396",
-        "phone_number": "50767474627",
-        "message_date": 557863465,
-        "media": "Media/50766738663@s.whatsapp.net/0/c/0c727870-6251-459c-8575-529d897298ea.mp4",
-        "mime_type": "video/mp4"
-    },
-    {
-        "chat_type": "sticker",
-        "direction": "incoming",
-        "whatsapp_id": "3AD1DC95CBAF6AD51811",
-        "phone_number": "50767474627",
-        "message_date": 565936875,
-        "media": "Media/50766729432@s.whatsapp.net/c/b/cbe69146-8b8b-4973-b5f2-eda226cfc52c.webp",
-        "mime_type": "image/webp"
-    },
-    {
-        "chat_type": "document",
-        "direction": "outgoing",
-        "whatsapp_id": "3EB0783983DD70659B0A",
-        "phone_number": "50767474627",
-        "message_date": 638138739,
-        "media": "Media/16314004766@s.whatsapp.net/7/5/755a1f7a-e1d7-43c8-9294-1200601f9a7b.csv",
-        "mime_type": "text/csv",
-        "text": "new_user_credentials (1).csv"
     }
 ]

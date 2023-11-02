@@ -6,7 +6,8 @@
     "scripts": {
         "db:generate": "prisma generate",
         "db:push": "prisma db push --skip-generate",
-        "db:seed": "prisma db seed"
+        "db:seed": "prisma db seed",
+        "db:studio": "prisma studio"
     },
     "prisma": {
         "seed": "ts-node prisma/seed.ts"
@@ -14,13 +15,15 @@
     "dependencies": {
         "@prisma/client": "^5.5.2",
         "dotenv": "latest",
+        "uuid": "latest",
         "test-data": "workspace:*",
         "sdk": "workspace:*"
     },
     "devDependencies": {
       "typescript": "^4.5.3",
       "prisma": "^5.5.2",
-      "ts-node": "latest"
+      "ts-node": "latest",
+      "@types/uuid": "latest"
     }
 }
   

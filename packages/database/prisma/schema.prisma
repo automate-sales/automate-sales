@@ -46,7 +46,7 @@ model Contact {
   email           String?
   profile_picture String?
   address         Json?
-  last_chat_time  Int?
+  last_chat_date  DateTime?
   last_chat_text  String?
   agent           Json?
   createdAt       DateTime       @default(now())
@@ -103,7 +103,7 @@ model Chat {
   direction     Direction?
   chat_type     ChatType?
   text          String?
-  media         String[]    @default([])
+  media         String?
   location      Json?
   link          Json?
   template_id   Int?
@@ -114,11 +114,11 @@ model Chat {
   insights      String[]    @default([])
   responded     Boolean     @default(false)
   response_time Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String?
-  updatedBy String?
+  chatDate      DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String?
+  updatedBy     String?
 }
 
 enum TemplateStatus {
