@@ -1,6 +1,4 @@
-# Turborepo starter
-
-This is an official starter Turborepo.
+# Built With Turborepo
 
 ## Using this example
 

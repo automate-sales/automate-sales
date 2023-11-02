@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContactStatus {
+  lead
+  contacted
+  prospect
+  quote_generated
+  negotiation
+  customer
+  loyalty
+  deferred
+}
+
+enum ContactSource {
+  whatsapp
+  iphone
+  wave
+  instagram
+  phone
+  website
+  quickbooks
+  other
+  store
+}
+
+model Contact {
+  id              String         @id @default(cuid())
+  whatsapp_id     String?
+  monday_id       String?
+  name            String?
+  whatsapp_name   String?
+  contact_status  ContactStatus? @default(lead)
+  contact_source  ContactSource? @default(whatsapp)
+  phone_number    String?
+  email           String?
+  profile_picture String?
+  address         Json?
+  last_chat_time  Int?
+  last_chat_text  String?
+  agent           Json?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  createdBy       String?
+  updatedBy       String?
+  chats           Chat[]
+}
+
+enum ChatStatus {
+  new
+  pending
+  sent
+  delivered
+  read
+  received
+  failed
+}
+
+enum Direction {
+  incoming
+  outgoing
+}
+
+enum ChatType {
+  template
+  audio
+  image
+  video
+  contact
+  location
+  link
+  document
+  sticker
+  other
+  media
+  text
+}
+
+enum Sentiment {
+  positive
+  negative
+  neutral
+}
+
+model Chat {
+  id            Int         @id @default(autoincrement())
+  whatsapp_id   String?
+  monday_id     String?
+  contact_id    String
+  contact       Contact     @relation(fields: [contact_id], references: [id])
+  name          String?
+  chat_status   ChatStatus?
+  direction     Direction?
+  chat_type     ChatType?
+  text          String?
+  media         String[]    @default([])
+  location      Json?
+  link          Json?
+  template_id   Int?
+  template      Template?   @relation(fields: [template_id], references: [id])
+  phone_number  String?
+  language      String?
+  sentiment     Sentiment?
+  insights      String[]    @default([])
+  responded     Boolean     @default(false)
+  response_time Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+}
+
+enum TemplateStatus {
+  approved
+  rejected
+  submitted
+}
+
+enum Language {
+  en
+  es
+}
+
+model Template {
+  id              Int             @id @default(autoincrement())
+  meta_id         String?
+  monday_id       String?
+  name            String?
+  template_status TemplateStatus?
+  language        Language?
+  variables       String[]        @default([])
+  body            String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  createdBy       String?
+  updatedBy       String?
+  chats           Chat[]
+}
