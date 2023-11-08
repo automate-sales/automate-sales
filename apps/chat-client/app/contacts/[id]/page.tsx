@@ -1,14 +1,10 @@
-import styles from "../../page.module.css";
+import { ChatHistory } from "../../components/chat-history";
+import { Layout } from "../../components/layout";
 
-export default function Page(): JSX.Element {
+export default function Page({params}:{params: {id: string}}): JSX.Element {
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          examples/basic&nbsp;
-          <code className={styles.code}>web</code>
-        </p>
-      </div>
-    </main>
+    <Layout contactId={params.id}>
+      <ChatHistory id={params.id}/>
+    </Layout>
   );
 }

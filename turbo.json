@@ -1,6 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
+  "globalDependencies": ["**/.env"],
+  "globalEnv": ["NEXT_PUBLIC_MONDAY_URL"],
   "pipeline": {
     "db:generate": {
       "cache": false

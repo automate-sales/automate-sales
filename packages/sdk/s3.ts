@@ -72,12 +72,15 @@ export const wipeS3Bucket = async (bucketName: string) => {
 export const uploadImageToS3 = async (
     bucketName: string,
     key: string,
-    imageBuffer: Buffer
+    imageBuffer: Buffer,
+    mime_type?: string
 ) => {
     return await s3Client.send(new PutObjectCommand({
         Bucket: bucketName,
         Key: key,
-        Body: imageBuffer
+        Body: imageBuffer,
+        ContentDisposition: "inline",
+        ...(mime_type && { ContentType: mime_type })
     }));
 }
 

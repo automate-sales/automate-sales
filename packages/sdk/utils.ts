@@ -1,6 +1,7 @@
 
 import countryDict from './countryCodes'
 import { PhoneNumberObj } from './types';
+import { parse } from 'node-html-parser';
 
 export function normalizePhoneNumber(
     phoneNumber: string, 
@@ -69,4 +70,44 @@ export const normalizeName =(name: string)=> {
     return newName.split(' ').map((word)=> {
         return word.charAt(0).toUpperCase() + word.slice(1);
     }).join(' ');
+}
+
+export const formatDate =(date: Date)=> {
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${month}-${day} ${hours}:${minutes}`;
+}
+
+export const getLinkProps = async(path: string)=> {
+    try {
+        const url = new URL(path);
+        const response = await fetch(path);
+        const data = await response.text();
+        const root = parse(data);
+        const title = root.querySelector('meta[property="og:title"]')?.getAttribute('content') || root.querySelector('title')?.textContent || 'Undefined';
+        const description = root.querySelector('meta[property="og:description"]')?.getAttribute('content') || root.querySelector('meta[name="description"]')?.getAttribute('content');
+        let image = root.querySelector('meta[property="og:image"]')?.getAttribute('content') || root.querySelector('link[rel="icon"]')?.getAttribute('href') || root.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href');
+        
+        // Construct full image URL if it's a relative path
+        if (image && !image.startsWith('http')) {
+            const basePath = url.origin
+            image = basePath + image;
+        }
+  
+        return {
+            url: path,
+            title,
+            description,
+            image
+        };
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        throw new Error('Failed to fetch or parse the URL content.');
+    }
+}
+
+export const getInitials =(name: string | null | undefined): string=> {
+    return name ? name.split(' ').map(word => word.charAt(0).toUpperCase()).join('') : '?';
 }

@@ -84,7 +84,7 @@ export default [
         "message_date": 555897611,
         "link": {
             "url": "https://youtu.be/M-5oWj1ubhk",
-            "text": "DECLARACIONES PROCURADORA GENERAL DE LA NACIÓN"
+            "title": "DECLARACIONES PROCURADORA GENERAL DE LA NACIÓN"
         },
         "text": "https://youtu.be/M-5oWj1ubhk"
     },
@@ -110,7 +110,9 @@ export default [
         "whatsapp_id": "3AF485208967B97B4F47",
         "phone_number": "50767474627",
         "message_date": 555909731.3794751,
-        "contact_name": "Rodolfito",
-        "contact_phone": "50767477221"
+        "contact_object": {
+            "name": "Rodolfito",
+            "phone_number": "50767477221"
+        }
     }
 ]

@@ -106,6 +106,7 @@ model Chat {
   media         String?
   location      Json?
   link          Json?
+  contact_object Json?
   template_id   Int?
   template      Template?   @relation(fields: [template_id], references: [id])
   phone_number  String?

@@ -8,7 +8,7 @@ import {contacts, chats} from "test-data";
 import { Chat, ChatType, Direction, PrismaClient } from '@prisma/client'
 import { v4 } from 'uuid';
 import path from 'path'
-import { normalizeName, normalizePhoneNumber } from 'sdk/utils';
+import { getLinkProps, normalizeName, normalizePhoneNumber } from 'sdk/utils';
 import { cocoaToDate } from 'sdk/whatsapp';
 const prisma = new PrismaClient()
 
@@ -67,9 +67,7 @@ async function seedChats() {
     
       const { 
         mime_type, 
-        message_date, 
-        contact_name,
-        contact_phone, 
+        message_date,
         ...validProps 
       } = chat
       let newChat = {
@@ -82,6 +80,7 @@ async function seedChats() {
         direction: chat.direction as Direction,
         chat_type: chat.chat_type as ChatType
       }
+      if(chat.link) newChat.link = await getLinkProps(chat.link.url)
       // upload media to s3
       if(chat.media && existsSync(chat.media)){
         const file = readFileSync(chat.media)
@@ -90,7 +89,7 @@ async function seedChats() {
         const key = `media/chats/${chatId}/${fileName}`
         newChat.media = key
         newChat.name = fileName
-        await uploadImageToS3(bucketName, key, file)
+        await uploadImageToS3(bucketName, key, file, mime_type)
       }
       await prisma.chat.create({
         data: newChat

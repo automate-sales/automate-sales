@@ -1,20 +1,24 @@
 import { PrismaClient } from 'database';
-import styles from "./page.module.css";
+import { Main } from 'ui';
+import { SideBar } from './components/side-bar';
 
 export default async function Page(): Promise<JSX.Element> {
   const prisma = new PrismaClient();
   const data = await prisma.contact.findMany();
 
   return (
-    <main className={styles.main}>
-      <div style={{color: 'white'}}>
-        {data.map((contact) => (
-          <div key={contact.id}>
-            <span>{contact.name}</span>
-            <span>{contact.email}</span>
-          </div>
-        ))}
+    <div className="flex h-screen">
+      
+      <SideBar />
+      <div className="bg-slate-400 flex flex-col flex-1">
+        <div className="flex bg-slate-300 h-14">
+          sopa
+        </div>
+        <div className="flex-col flex-1 bg-slate-500"></div>
+        <div className="flex bg-slate-300 h-24">
+          Sopa
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
