@@ -1,3 +1,13 @@
+import crypto from 'crypto';
+import { WhatsappMessage } from './types';
+import { getLinkProps, isLink, normalizePhoneNumber } from './utils';
+
+export const validateMetaSignature = (payload: string, signature: string) => {
+    const hash = crypto.createHmac('sha1', process.env.META_APP_SECRET as string).update(payload).digest('hex');
+    const sig = signature?.split('sha1=')[1]
+    return sig === hash;
+};
+
 export const cocoaToMs = (cocoaTimestamp: number) => {
     const cocoaEpochInMilliseconds = Date.UTC(2001, 0, 1); // January 1, 2001 in milliseconds
     return cocoaEpochInMilliseconds + cocoaTimestamp * 1000;
@@ -51,3 +61,82 @@ export const cocoaToDate = (cocoaTimestamp: number) => {
     }
     return chats
 } */
+
+const mediaTypes = [
+    'image',
+    'video',
+    'audio',
+    'document',
+    'sticker'
+]
+
+
+const parseMediaChat =(message: WhatsappMessage)=> {
+    const media = message[message.type] || null
+    const mediaType = message.type
+    if(mediaTypes.includes(mediaType) && media && 'id' in media){
+        const caption = 'caption' in media ? media.caption : null
+        const filename = 'filename' in media ? media.filename : null
+        return {
+            media: media.id,
+            mimeType: media.mime_type,
+            text: filename || caption || media.mime_type
+        }
+    }  
+}
+
+export const parseMessage =(message: WhatsappMessage)=> {
+    let chat = {} as any
+    if(message && message[message.type]){
+        chat.type = message.type
+        chat.direction = 'incoming'
+        chat.chatDate = cocoaToDate(parseInt(message.timestamp))
+        switch (message.type) {
+            case 'text':
+                const body = message.text?.body? message.text.body : null
+                if(body){
+                    chat.text = body
+                    const link = isLink(body)
+                    if(link){
+                        const linkProps = await getLinkProps(link)
+                        chat.type = 'link'
+                        chat.link = linkProps
+                    }
+                }
+                break;
+            case 'contacts':
+                const contact = message.contacts ? message.contacts[0] : null
+                if(contact){
+                    const contactName = contact.name.formatted_name || contact.name.first_name
+                    const contactPhone = contact.phones[0].phone 
+                    const phoneNumberObj = normalizePhoneNumber(contactPhone)
+                    chat.contact_object = {
+                        name: contactName,
+                        phone: phoneNumberObj?.e164Format,
+                        countryShortName: phoneNumberObj?.countryCode
+                    }
+                }
+                break;
+            case 'location':
+                chat.location = message.location
+                break;
+            case 'audio':
+                chat = {...chat, ...parseMediaChat(message)}
+                break;
+            case 'image':
+                chat = {...chat, ...parseMediaChat(message)}
+                break;
+            case 'video':
+                chat = {...chat, ...parseMediaChat(message)}
+                break;
+            case 'document':
+                chat = {...chat, ...parseMediaChat(message)}
+                break;
+            case 'sticker':
+                chat = {...chat, ...parseMediaChat(message)}
+                break;
+            default:
+                throw new Error(`Unrecognized message type: ${message.type}`)
+        }
+    }
+}

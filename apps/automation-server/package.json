@@ -22,16 +22,19 @@
     "pino": "^8.15.0",
     "pino-pretty": "^10.2.0",
     "query-string": "^5.0.1",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "sdk": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^17.0.12",
     "@types/express": "^4.17.13",
     "@types/body-parser": "latest",
+    "@types/cors": "latest",
     "eslint-config-custom": "workspace:*",
     "tsconfig": "workspace:*",
     "typescript": "latest",
     "ts-node": "latest",
-    "nodemon": "latest"
+    "nodemon": "latest",
+    "cors": "latest"
   }
 }
