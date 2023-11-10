@@ -5,7 +5,6 @@ import { PaperClipIcon, FaceSmileIcon, MicrophoneIcon, DocumentTextIcon, PhotoIc
 import { MediaButton } from './media-button';
 import { AudioButton } from './audio-button';
 import { ContactButton } from './contact-button';
-import { CameraButton } from './camera-button';
 
 interface Template {
     name: string;
@@ -42,8 +41,17 @@ export function ChatBar(): JSX.Element {
         setMessage(templateName);
     };
 
-    const handleMessageSend = (e: React.FormEvent<HTMLFormElement>): void => {
+    const handleMessageSend = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
+        const endpoint = `${process.env.NEXT_PUBLIC_SERVER_URL}/whatsapp/message`
+        console.log('endpoint ', endpoint)
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ message, type: 'text' })
+        })
+        const body = await res.json()
+        console.log('BODYYY ', body)
         if (message.trim() === "") return;
 
         setIsLoading(true);
@@ -82,7 +90,9 @@ export function ChatBar(): JSX.Element {
                     <div className={`absolute bottom-10 -left-1 w-48 bg-white shadow-lg rounded-sm overflow-hidden transition-transform transform ${isMenuOpen ? 'scale-100' : 'scale-0'}`}>
                         {/* Menu Items */}
                         <MediaButton />
-                        <CameraButton />
+                        <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleCameraClick} type="button">
+                            <CameraIcon className="h-6 w-6 mr-2" /> Camera
+                        </button>
                         <ContactButton/>
                         <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleLocationClick} type="button">
                             <MapPinIcon className="h-6 w-6 mr-2" /> Location

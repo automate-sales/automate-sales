@@ -80,7 +80,21 @@ export const formatDate =(date: Date)=> {
     return `${month}-${day} ${hours}:${minutes}`;
 }
 
-export const getLinkProps = async(path: string)=> {
+export const isLink =(text:string)=> {
+    const potentialMatches = text.match(/https?:\/\/\S+/gi);
+    if (!potentialMatches) return false;
+    for (let match of potentialMatches) {
+        try {
+            const url = new URL(match);
+            return url;
+        } catch (e) {
+            continue;
+        }
+    }
+    return null;
+}
+
+export const getLinkProps = async(path: string | URL)=> {
     try {
         const url = new URL(path);
         const response = await fetch(path);

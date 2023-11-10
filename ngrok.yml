@@ -1,0 +1,8 @@
+version: 2
+authtoken: 2SUcauiAIf9K0hX9OcgqN2lhC7Y_6uvHVGdFSM4rBYuNVYytw
+log_level: info
+tunnels:
+  first:
+    proto: http
+    addr: host.docker.internal:8000
+    domain: grand-whole-pigeon.ngrok-free.app
