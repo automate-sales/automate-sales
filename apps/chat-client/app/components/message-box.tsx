@@ -88,7 +88,7 @@ function LocationMessage({ message }: { message: Chat & {location: Location } })
   return (
     <div className="flex items-center justify-center">
       <Link className="flex flex-col items-center" href={`https://www.google.com/maps/search/?api=1&query=${query}`} target="_blank">
-          <span className="pb-1">{message.location.address || 'Location'}</span>
+          <span className="pb-1 text-blue-700 underline">{message.location.address || 'Location'}</span>
           <MapPinIcon aria-label="Location" className="h-6 w-6"/>
       </Link>
     </div>

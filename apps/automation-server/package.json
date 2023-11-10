@@ -30,7 +30,7 @@
     "@types/body-parser": "latest",
     "eslint-config-custom": "workspace:*",
     "tsconfig": "workspace:*",
-    "typescript": "^4.5.3",
+    "typescript": "latest",
     "ts-node": "latest",
     "nodemon": "latest"
   }

@@ -1,7 +1,7 @@
 import { PrismaClient } from "database";
 import MessageBox from "./message-box";
 
-export async function ChatHistory({ id } : {id: string}): JSX.Element {
+export async function ChatHistory({ id } : {id: string}): Promise<JSX.Element> {
     const prisma = new PrismaClient();
     const chats = await prisma.chat.findMany({
         where: {
