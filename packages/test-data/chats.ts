@@ -6,7 +6,8 @@ export default [
         "phone_number": "50767474627",
         "message_date": 718300102,
         "media": `${__dirname}/media/chat/audio.opus`,
-        "mime_type": "audio/ogg"
+        "mime_type": "audio/ogg",
+        "text": "audio/ogg"
     },
     {
         "chat_type": "document",
@@ -25,7 +26,8 @@ export default [
         "phone_number": "50767474627",
         "message_date": 718310278,
         "media": `${__dirname}/media/chat/image.jpg`,
-        "mime_type": "image/jpeg"
+        "mime_type": "image/jpeg",
+        "text": "image/jpeg"
     },
     {
         "chat_type": "video",
@@ -34,7 +36,8 @@ export default [
         "phone_number": "50767474627",
         "message_date": 545349586,
         "media": `${__dirname}/media/chat/video.mp4`,
-        "mime_type": "video/mp4"
+        "mime_type": "video/mp4",
+        "text": "video/mp4"
     },
     {
         "chat_type": "sticker",
@@ -43,7 +46,8 @@ export default [
         "phone_number": "50767474627",
         "message_date": 557863465,
         "media": `${__dirname}/media/chat/sticker.mp4`,
-        "mime_type": "video/mp4"
+        "mime_type": "video/mp4",
+        "text": "video/mp4"
     },
     {
         "chat_type": "sticker",
@@ -52,7 +56,8 @@ export default [
         "phone_number": "50767474627",
         "message_date": 565936875,
         "media": `${__dirname}/media/chat/sticker.webp`,
-        "mime_type": "image/webp"
+        "mime_type": "image/webp",
+        "text": "image/webp"
     },
     {
         "chat_type": "document",
@@ -74,7 +79,8 @@ export default [
             "lat": 8.994515419006348,
             "lng": -79.51808166503906,
             "address": "Durex\nPanama City, Panamá"
-        }
+        },
+        "text": "Durex\nPanama City, Panamá"
     },
     {
         "chat_type": "link",
@@ -113,6 +119,7 @@ export default [
         "contact_object": {
             "name": "Rodolfito",
             "phone_number": "50767477221"
-        }
+        },
+        "text": "Rodolfito"
     }
 ]

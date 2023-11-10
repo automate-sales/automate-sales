@@ -9,7 +9,7 @@ export default function Layout({
   }): JSX.Element {
     return (
         <div className="flex h-screen">
-            <SideBar />
+
             <div className="bg-slate-400 flex flex-col flex-1">
                 <TopBar />
                   {children}

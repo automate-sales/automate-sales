@@ -1,14 +1,22 @@
+import { ChatBar } from "../../components/chat-bar/chat-bar";
 import { ChatHistory } from "../../components/chat-history";
 import { ContactInfo } from "../../components/contact-info";
 import Layout from "../../components/layout";
+import { SideBar } from "../../components/side-bar";
+import { TopBar } from "../../components/top-bar";
 
-export default function Page({params}:{params: {id: string}}): JSX.Element {
+export default function Page({ params, searchParams }: { params: { id: string }, searchParams: any }): JSX.Element {
   return (
-    <Layout>
-      <ContactInfo contactId={params.id}/>
-      <div className="flex-col flex-1 bg-slate-500 lg:h-screen lg:overflow-auto">
-        <ChatHistory id={params.id}/>
+    <div className="flex h-screen">
+      <SideBar params={params} searchParams={searchParams} />
+      <div className="bg-slate-400 flex flex-col flex-1">
+        <TopBar />
+        <ContactInfo contactId={params.id} />
+        <div className="flex-col flex-1 bg-slate-500 lg:h-screen lg:overflow-auto">
+          <ChatHistory id={params.id} />
+        </div>
+        <ChatBar />
       </div>
-    </Layout>
+    </div>
   );
 }
