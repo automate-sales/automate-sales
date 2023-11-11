@@ -45,12 +45,12 @@ const io = new Server(server, {
     }
 });
 
-app.use('/whatsapp', whatsappRoutes);
+app.use('/whatsapp', whatsappRoutes(io) );
 
 io.on('connection', (socket) => {
-    logger.debug('a user connected');
+    logger.info('a user connected');
     socket.on('disconnect', () => {
-      logger.debug('user disconnected');
+      logger.info('user disconnected');
     });
 });
 

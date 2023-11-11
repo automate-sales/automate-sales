@@ -72,7 +72,8 @@ export const normalizeName =(name: string)=> {
     }).join(' ');
 }
 
-export const formatDate =(date: Date)=> {
+export const formatDate =(date: Date | string)=> {
+    date = new Date(date);
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     const hours = date.getHours().toString().padStart(2, '0');
@@ -111,7 +112,7 @@ export const getLinkProps = async(path: string | URL)=> {
         }
   
         return {
-            url: path,
+            url: String(path),
             title,
             description,
             image
