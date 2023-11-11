@@ -1,5 +1,6 @@
 import { PrismaClient } from "database";
 import MessageBox from "./message-box";
+import { ChatHistoryContent } from "./chat-history-content";
 
 export async function ChatHistory({ id } : {id: string}): Promise<JSX.Element> {
     const prisma = new PrismaClient();
@@ -10,10 +11,9 @@ export async function ChatHistory({ id } : {id: string}): Promise<JSX.Element> {
         orderBy: {
             createdAt: 'asc',
         },
+        take: 200,
     });
     return (
-        <div className="p-3">
-            { chats.map((chat, idx) => <MessageBox index={idx} key={chat.id} message={chat} />)}
-        </div>
+        <ChatHistoryContent chats={chats} contactId={id}/>
     );
 }

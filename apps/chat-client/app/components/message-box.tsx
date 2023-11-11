@@ -117,7 +117,7 @@ function LinkMessage({ message }: { message: Chat & { link: LinkObject } }): JSX
 };
 
 function MessageBody({ message }: { message: Chat }): JSX.Element {
-  switch (message.chat_type) {
+  switch (message.type) {
     case 'image':
       return <ImageMessage message={message} />;
     case 'video':
@@ -148,7 +148,7 @@ function MessageStatus({ message }: { message: Chat }): JSX.Element{
       <ExclamationCircleIcon className="text-orange-500 h-6 w-6"/>
     );
   }
-  switch (message.chat_status) {
+  switch (message.status) {
     case 'sent':
       return <CheckIcon className="text-green-500 h-6 w-6" />;
     case 'delivered':

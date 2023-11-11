@@ -23,7 +23,8 @@
     "pino-pretty": "^10.2.0",
     "query-string": "^5.0.1",
     "socket.io": "^4.7.2",
-    "sdk": "workspace:*"
+    "sdk": "workspace:*",
+    "database": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^17.0.12",

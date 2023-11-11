@@ -5,7 +5,7 @@ dotenv.config({ path: `.env.${NODE_ENV}`});
 import { existsSync, readFileSync } from 'fs';
 import { createPublicBucket, uploadImageToS3, wipeS3Bucket } from "sdk/s3";
 import {contacts, chats} from "test-data";
-import { Chat, ChatType, Direction, PrismaClient } from '@prisma/client'
+import { Chat, ChatStatus, ChatType, Direction, PrismaClient } from '@prisma/client'
 import { v4 } from 'uuid';
 import path from 'path'
 import { getLinkProps, normalizeName, normalizePhoneNumber } from 'sdk/utils';
@@ -27,6 +27,7 @@ async function seedContacts() {
     let newContact = {
       ...contact,
       id: contactId,
+      whatsapp_id: contact.phone_number,
       name: contact.name ? normalizeName(contact.name) : contact.phone_number,
       phone_number: phoneNumberObj?.e164Format,
       whatsapp_name: contact.name,
@@ -48,9 +49,8 @@ async function seedContacts() {
 }
 
 async function seedChats() {
-  let idx = 0
+  let idx = 1
   for(let chat of chats){
-    idx += 1
     const chatId = idx
     const phoneNumberObj = normalizePhoneNumber(chat.phone_number)
 
@@ -72,13 +72,13 @@ async function seedChats() {
       } = chat
       let newChat = {
         ...validProps,
-        id: chatId,
-        name: `new ${chat.chat_type}`,
+        name: `new ${chat.type}`,
         contact_id: contact.id,
         phone_number: phoneNumberObj?.e164Format,
         chatDate: cocoaToDate(message_date),
         direction: chat.direction as Direction,
-        chat_type: chat.chat_type as ChatType
+        status: chat.direction == 'incoming' ? 'received' : 'delivered' as ChatStatus,
+        type: chat.type as ChatType
       }
       if(chat.link) newChat.link = await getLinkProps(chat.link.url)
       // upload media to s3
@@ -94,6 +94,7 @@ async function seedChats() {
       await prisma.chat.create({
         data: newChat
       })
+      idx+=1
     }
   }
 }

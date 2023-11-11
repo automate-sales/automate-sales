@@ -15,6 +15,13 @@ export type PhoneNumberObj = {
     error?: string
 }
 
+export type WhatsappContact = {
+    profile: {
+        name: string;
+    };
+    wa_id: string;
+}
+
 export type WhatsappMessage = {
     from: string;
     id: string;
@@ -93,12 +100,7 @@ export type WhatsappWebhook = {
                     display_phone_number: string;
                     phone_number_id: string;
                 };
-                contacts: Array<{
-                    profile: {
-                        name: string;
-                    };
-                    wa_id: string;
-                }>;
+                contacts: Array<WhatsappContact>;
                 messages?: Array<WhatsappMessage>;
                 statuses?: Array<WhatsappStatus>;
             };
@@ -106,3 +108,19 @@ export type WhatsappWebhook = {
         }>;
     }>;
 };
+
+
+export type ChatObject = {
+    whatsapp_id: string,
+    name: string,
+    type: any,
+    direction: any,
+    chatDate: Date,
+    text?: string,
+    link?: any,
+    contact_object?: any,
+    location?: any,
+    media?: any,
+    mimeType?: string,
+    status?: any,
+}
