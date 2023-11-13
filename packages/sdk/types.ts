@@ -1,3 +1,5 @@
+import { File } from "formidable"
+
 export type CountryCodeDict = {
     [key: string]: {
         code: string,
@@ -120,7 +122,45 @@ export type ChatObject = {
     link?: any,
     contact_object?: any,
     location?: any,
-    media?: any,
+    media?: null | File,
     mimeType?: string,
     status?: any,
+}
+
+export type ChatItem = Omit<ChatObject, 'media'> & { media?: string; }
+
+export interface WhatsAppMediaUploadResponse {
+    messaging_product: string;
+    url: string;
+    mime_type: string;
+    sha256: string;
+    file_size: string;
+    id: string;
+}
+
+export type WhatsAppMessageResponse = {
+    messaging_product: string;
+    contacts: {
+        input: string;
+        wa_id: string;
+    }[];
+    messages: {
+        id: string;
+    }[];
+};
+
+export type WhatsappMediaObject = {
+    caption?: string;
+    mime_type: string,
+    sha256: string,
+    id: string
+}
+
+export type WhatsappMediaResponse = {
+    messaging_product: string;
+    url: URL | string;
+    mime_type: string;
+    sha256: string;
+    file_size: number;
+    id: string;
 }

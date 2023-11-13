@@ -13,6 +13,8 @@ import { cocoaToDate } from 'sdk/whatsapp';
 const prisma = new PrismaClient()
 
 const bucketName = `${process.env.PROJECT_NAME}-media`
+const MEDIA_BASE_URL = process.env.MEDIA_BASE_URL || 'http://localhost:9000'
+const PROJECT_NAME = process.env.PROJECT_NAME || 'automation'
 
 async function wipeDatabase() {
   console.log('Wiping Data')
@@ -87,7 +89,7 @@ async function seedChats() {
         // upload file to s3
         const fileName = path.basename(chat.media)
         const key = `media/chats/${chatId}/${fileName}`
-        newChat.media = key
+        newChat.media = `${MEDIA_BASE_URL}/${PROJECT_NAME}-media/${key}`
         newChat.name = fileName
         await uploadImageToS3(bucketName, key, file, mime_type)
       }

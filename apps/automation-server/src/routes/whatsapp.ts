@@ -5,11 +5,14 @@ dotenv.config({ path: `.env.${ENV}` });
 import logger from '../../logger';
 import express, { Router, Request, Response } from 'express';
 
-import { parseMessage, validateMetaSignature } from 'sdk/whatsapp';
-import type  { WhatsappWebhook } from 'sdk/types'
-import { createChat, getOrCreateContact } from '../utils/prisma';
+import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
+import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
+import type  { ChatItem, ChatObject, WhatsappMediaObject, WhatsappWebhook } from 'sdk/types'
+import { createReceivedChat, createSentChat, updateChat } from '../utils/prisma';
 
 import { Server as SocketIOServer } from 'socket.io';
+
+import formidable from 'formidable';
 
 export default function(io: SocketIOServer){
     const router: Router = Router();
@@ -63,8 +66,27 @@ export default function(io: SocketIOServer){
                                 let obj = await parseMessage(message)
                                 obj.status = 'received'
                                 logger.info(obj, 'OBJECT: ')
-                                const chat = await createChat(obj, wa_contact)
+                                const chat = await createReceivedChat(obj, wa_contact)
                                 logger.info(chat, 'CHAT: ')
+                                if(message.type && mediaTypes.includes(message.type)){
+                                    //upload to s3
+                                    logger.info(chat.media, 'media file! ')
+                                    const media = message[message.type] as WhatsappMediaObject
+                                    logger.info(chat.media, 'media file')
+                                    const mediaRes = await getFromWhatsappMediaAPI(media.id)
+                                    const arrayBuffer = await downloadFileAsArrayBuffer(mediaRes.url)
+                                    const fileName = `${generateMediaId()}.${media.mime_type.split('/')[1]}`
+                                    const key = `media/chats/${chat.id}/${fileName}`
+                                    const s3Url = await uploadFileToS3(arrayBuffer, key);
+                                    const obj = {
+                                        media: s3Url,
+                                        name: fileName,
+                                        text: fileName,
+                                        type: getTypeFromMime(media.mime_type)
+                                    }
+                                    await updateChat(chat.id, obj)
+                                    logger.info(res, 'chat updated with media')
+                                }
                                 // return socket event
                                 io.emit('new_message', chat)
                             }
@@ -102,28 +124,47 @@ export default function(io: SocketIOServer){
         'media'
     ]
 
+    const formPromise = (req: Request): Promise<{ fields: formidable.Fields<string>, files: formidable.Files<string> }> => {
+        return new Promise((resolve, reject) => {
+            const form = formidable({})
+            form.parse(req, (err, fields, files) => {
+                if (err) reject(err)
+                resolve({ fields, files })
+            })
+        })
+    }
+
     // sends a message through whatsapp business
-    router.post("/message", async (req, res) => {
-        logger.debug(req, 'whatsapp message request')
-        const { type, message } = req.body;
-        try {
-                switch(type){
-                    case 'text':
-                        console.log('sending text message ', message)
-                        break;
-                    case 'media':
-                        // send media message
-                        break;
-                    case 'template':
-                        // send template message
-                        break;
-                    default:
-                        //return res.status(400).send('Invalid message type')
-                        console.log('sending text message ', message)
-                        break;
+    router.post("/message", async (req, res, next) => {
+        try{
+            const { fields, files } = await formPromise(req)
+            logger.info(fields, 'form fields')
+            const contactId = fields?.contact_id?.[0] ? fields.contact_id[0] : null
+            if(!contactId) throw new Error('No contact_id found in form data')
+            let obj = generateMessage(fields, files)
+            const {media, ...item} = obj
+            let chat = await createSentChat(item, contactId)
+            if(media){
+                //upload to s3
+                logger.info(media, 'media file')
+                const fileName = media.originalFilename || media.mimetype ? `${media.newFilename}.${media.mimetype?.split('/')[1]}` : media.newFilename
+                const key = `media/chats/${chat.id}/${fileName}`
+                const s3Url = await uploadFileToS3(media, key);
+                const obj = {
+                    media: s3Url,
+                    name: fileName,
+                    text: fileName,
+                    type: getTypeFromMime(media.mimetype)
                 }
-                return res.status(200).json({ message: 'Message sent succesfully' })
-        }  catch(err){
+                chat = await updateChat(chat.id, obj)
+                logger.info(res, 'chat updated with media')
+            }
+            const phoneNumber = chat.contact.phone_number
+            const whatsappMessage = await sendMessage(phoneNumber, chat.text, media)
+            chat = await updateChat(chat.id, { whatsapp_id: whatsappMessage.messages[0].id, status: 'pending' })
+            io.emit('new_message', chat)
+            return res.status(200).send('Message sent')
+        } catch(err){
             logger.error(err)
             const errorMessage = err instanceof Error ? 
             err.message? err.message : JSON.stringify(err) :

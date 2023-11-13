@@ -1,11 +1,12 @@
 'use client'
 
 import { useRef, useEffect, useState } from "react";
-import io from "socket.io-client";
+import { io, Socket} from "socket.io-client";
 import { Chat } from "database";
 import MessageBox from "./message-box";
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
+let socket = null as Socket | null;
 
 export function ChatHistoryContent({ chats, contactId } : {chats: Chat[], contactId: string}): JSX.Element {
     const [futureChatHistory, setFutureChatHistory] = useState([]);
@@ -18,8 +19,8 @@ export function ChatHistoryContent({ chats, contactId } : {chats: Chat[], contac
     };
 
     useEffect(() => {
+        socket = io(SERVER_URL);  
         scrollToBottom();
-        const socket = io(SERVER_URL);  
         socket.on('new_message', (newMessage: Chat) => {
           if (newMessage.contact_id === contactId) {
             setFutureChatHistory(prevFutureChatHistory => [...prevFutureChatHistory, newMessage]);
@@ -44,7 +45,9 @@ export function ChatHistoryContent({ chats, contactId } : {chats: Chat[], contac
 
     return (
         <div className="p-3" ref={chatContainerRef} onScroll={handleScroll}>
-            {chatHistory.map((chat, idx) => <MessageBox index={idx} key={chat.id} message={chat} />)}
+            {chatHistory.map((chat) => 
+                <MessageBox key={`chat-${chat.id}`} message={chat} />
+            )}
         </div>
     );
 }

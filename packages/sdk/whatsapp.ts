@@ -2,8 +2,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import crypto from 'crypto';
-import { ChatObject, WhatsappMessage } from './types';
+import { ChatItem, ChatObject, WhatsAppMediaUploadResponse, WhatsAppMessageResponse, WhatsappMediaResponse, WhatsappMessage } from './types';
 import { getLinkProps, isLink, normalizePhoneNumber } from './utils';
+import { File } from 'formidable';
+import { createReadStream } from 'fs'
+import FormData from 'form-data';
+import axios from 'axios';
+import { getTypeFromMime } from './s3';
+
 
 export const validateMetaSignature = (payload: string, signature: string) => {
     const hash = crypto.createHmac('sha1', process.env.META_APP_SECRET as string).update(payload).digest('hex');
@@ -91,13 +97,19 @@ const parseMediaChat =(message: WhatsappMessage)=> {
             mimeType: media.mime_type,
             text: filename || caption || media.mime_type,
             name: filename || media.mime_type
-        }
+        } as any
     }  
 }
 
-export const parseMessage = async (message: WhatsappMessage): Promise<ChatObject> => {
+export const generateMediaId =()=> {
+    const min = 1000000000;
+    const max = 9999999999;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export const parseMessage = async (message: WhatsappMessage): Promise<ChatItem> => {
     console.log('parsing message')
-    let chat = {} as ChatObject
+    let chat = {} as ChatItem
     if(message && message[message.type]){
         chat.type = message.type
         chat.whatsapp_id = message.id
@@ -150,3 +162,142 @@ export const parseMessage = async (message: WhatsappMessage): Promise<ChatObject
         } 
     } else throw new Error(`Message type not found: ${message.type}`)
 }
+
+export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
+    console.log('generating message')
+    const messageType = fields?.type[0] ? fields.type[0] : null as string | null
+    if(!messageType) throw new Error('No message type found in form data')
+    let chat = {
+        type: messageType,
+        direction: 'outgoing',
+        chatDate: new Date()
+    } as ChatObject
+    switch(messageType){
+        case 'text':
+            const text = fields?.text[0] ? fields.text[0] : null as string | null
+            if(!text) throw new Error('No text found in text message')
+            chat.text = text
+            chat.name = text.substring(0, 24)
+            const link = isLink(text)
+            if(link){
+                //const linkProps = getLinkProps(link)
+                chat.type = 'link'
+                chat.link = { url: link }
+            }
+            return chat;
+        case 'contacts':
+            const contact = fields.contact as string
+            if(!contact) throw new Error('No contact found in contacts message')
+            const contactObj = JSON.parse(contact)
+            chat.contact_object = contactObj
+            console.log(contactObj)
+            return chat;
+        case 'location':
+            const location = fields.location as string
+            if(!location) throw new Error('No location found in location message')
+            const locationObj = JSON.parse(location)
+            chat.location = locationObj
+            return chat;
+        case 'media':
+            chat.media = files.file[0] as File | null
+            return chat;
+        default:
+            throw new Error(`Unrecognized message type: ${messageType}`)
+    }
+}
+
+export async function sendMessage(
+    phone?: string |null, // valid phone number with whatsapp for the recipient of the message
+    message?: string | null, // text body of the message
+    media?: null| File, // id of the whatsapp media object
+): Promise<WhatsAppMessageResponse>{
+
+    if(!message && !media || !phone) throw new Error('Must provide a message or media and a phone number')
+    const mediaId = media ? await uploadToWhatsAppMediaAPI(media) : null
+    const fileName = media?.originalFilename || media?.mimetype ? `${media?.newFilename}.${media?.mimetype?.split('/')[1]}` : media?.newFilename
+    const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_ID}/messages`
+    const messageType = getTypeFromMime(media?.mimetype)
+    const data = {
+        messaging_product: "whatsapp",
+        to: phone,
+        type: messageType,
+        ...(message? {text: {body: message}} : {}),
+        ...(media? {[messageType]: {id: mediaId, ...(messageType === 'document'? {filename: fileName} : {})}} : {}),
+    }
+    const res = await fetch(url , {
+        method: 'post',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`
+        },
+        body: JSON.stringify(data)
+    });
+    if(res.ok){
+        return await res.json() as WhatsAppMessageResponse;
+    } else {
+        const errorTxt = await res.text()
+        throw new Error(errorTxt)
+    }
+}
+
+
+
+export async function getFromWhatsappMediaAPI(mediaId: string): Promise<WhatsappMediaResponse>{
+    const res = await fetch(`https://graph.facebook.com/v18.0/${mediaId}/`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`
+        }
+    });
+    if(res.ok){
+        return await res.json() as WhatsappMediaResponse;
+    } else {
+        const errorTxt = await res.text()
+        throw new Error(errorTxt)
+    }
+}
+
+export const downloadFileAsArrayBuffer = async (url: URL | string): Promise<ArrayBuffer> => {
+    try {
+        const response = await axios(
+            String(url),
+            {
+                responseType: 'arraybuffer',
+                headers: {
+                    'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`
+                }
+
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error downloading the file:', error);
+        throw error;
+    }
+};
+
+export async function uploadToWhatsAppMediaAPI(file: File) {
+    const fileStream = createReadStream(file.filepath);
+    const fileName = file.originalFilename || file.mimetype ? `${file.newFilename}.${file.mimetype?.split('/')[1]}` : file.newFilename
+    const formData = new FormData();
+    formData.append('file', fileStream, fileName);
+    const headers = {
+        'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
+        ...formData.getHeaders() // This sets the 'Content-Type' header to 'multipart/form-data'
+    }
+    const mediaResponse = await axios.post(
+        `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_ID}/media`,
+        formData,
+        { headers }
+    );
+    if(mediaResponse.status !== 200) {
+        throw new Error(`Error uploading to the whatsapp media API: ${mediaResponse.statusText}`)
+    }
+    if (!mediaResponse.data.id) throw new Error('Failed to upload the PDF to WhatsApp Media API');
+    return mediaResponse.data.id;
+}
+
+
+
+
+
