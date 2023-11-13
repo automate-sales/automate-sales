@@ -13,8 +13,8 @@ export function SideBarContent({contacts}: {contacts: ContactWChats[]}): JSX.Ele
       <div className='flex-1 flex-col gap-2'>
         {
           contacts.map((contact) => (
-
-              <Link key={contact.id} href={`/contacts/${contact.id}`}>
+            <div key={contact.id}>
+              <Link  href={`/contacts/${contact.id}`}>
                 <div className='p-2 hover:bg-slate-200'>
                   <div className='flex justify-between'>
                     <div className='text-gray-900 text-sm'>{contact.name}</div>
@@ -22,7 +22,8 @@ export function SideBarContent({contacts}: {contacts: ContactWChats[]}): JSX.Ele
                     </div>
                   <div className='text-xs text-gray-600'>{getSummary(contact.chats)}</div>
                 </div>
-              </Link>))
+              </Link>
+            </div>))
         }
       </div>
 

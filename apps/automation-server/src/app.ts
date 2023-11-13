@@ -49,6 +49,12 @@ app.use('/whatsapp', whatsappRoutes(io) );
 
 io.on('connection', (socket) => {
     logger.info('a user connected');
+
+    socket.on('typing', (data) => {
+        console.log('USER TYPING: ', data);
+        socket.broadcast.emit('typing', data); // broadcast to all users except the one who is typing
+    });
+
     socket.on('disconnect', () => {
       logger.info('user disconnected');
     });

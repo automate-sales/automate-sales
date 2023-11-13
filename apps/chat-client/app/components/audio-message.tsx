@@ -9,7 +9,7 @@ import {
 import type { Chat } from "database";
 
 const mediaUrl = (mediaKey: string | null): string => {
-  return mediaKey ? `${process.env.NEXT_PUBLIC_MINIO_ENDPOINT}/${process.env.NEXT_PUBLIC_PROJECT_NAME}-media/${mediaKey}` : '';
+  return mediaKey ? `${process.env.NEXT_PUBLIC_MEDIA_BASE_URL}/${process.env.NEXT_PUBLIC_PROJECT_NAME}-media/${mediaKey}` : '';
 }
 
 export function AudioMessage({ message }: { message: Chat }): JSX.Element {

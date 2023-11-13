@@ -1,10 +1,15 @@
 'use client'
 
-import React, { useState } from 'react';
-import { PaperClipIcon, FaceSmileIcon, MicrophoneIcon, DocumentTextIcon, PhotoIcon, CameraIcon, UserIcon, StarIcon, ChevronRightIcon, ArrowRightIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import React, { useEffect, useState } from 'react';
+import { PaperClipIcon, FaceSmileIcon, CameraIcon, StarIcon, ChevronRightIcon, ArrowRightIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { MediaButton } from './media-button';
 import { AudioButton } from './audio-button';
 import { ContactButton } from './contact-button';
+import { generateMessage } from 'sdk/whatsapp';
+
+import { io, Socket} from "socket.io-client";
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
+let socket = null as Socket | null;
 
 interface Template {
     name: string;
@@ -23,13 +28,14 @@ function Spinner(): JSX.Element {
 }
 
 
-export function ChatBar(): JSX.Element {
+export function ChatBar({contactId}: {contactId: string}): JSX.Element {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const [isTemplatesOpen, setIsTemplatesOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [message, setMessage] = useState<string>("");
+    const [messageType, setMessageType] = useState<string>("text");
+    const [typingUser, setTypingUser] = useState<string | null>(null);
 
-    
     const handleCameraClick = (): void => { console.log('Camera clicked'); };
     const handleContactClick = (): void => { console.log('Contact clicked'); };
     const handleLocationClick = (): void => { console.log('Location clicked'); };
@@ -41,26 +47,38 @@ export function ChatBar(): JSX.Element {
         setMessage(templateName);
     };
 
-    const handleMessageSend = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-        e.preventDefault();
+    useEffect(() => {
+        socket = io(SERVER_URL);  
+        const handleTyping = (data: { user: string; typing: boolean }) => {
+            setTypingUser(data.typing ? data.user : null);
+        };
+        socket.on('typing', (data)=> handleTyping(data));
+        return () => {
+            socket.off('typing', handleTyping);
+        };
+    }, []);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const currentMessage = e.target.value;
+        setMessage(currentMessage);
+        const isTyping = currentMessage.length > 0;
+        socket.emit('typing', { user: 'YourUsername', typing: isTyping });
+    };
+
+    async function sendMessage(formData: FormData) {
+
         const endpoint = `${process.env.NEXT_PUBLIC_SERVER_URL}/whatsapp/message`
-        console.log('endpoint ', endpoint)
-        const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ message, type: 'text' })
-        })
-        const body = await res.json()
-        console.log('BODYYY ', body)
-        if (message.trim() === "") return;
 
         setIsLoading(true);
-        console.log('Message sent:', message);
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            body: formData
+        })
+        console.log(res)
 
-        setTimeout(() => {
-            setIsLoading(false);
-            setMessage('');
-        }, 2000);
+        setIsLoading(false);
+        setTypingUser(null);
+        setMessage('');
     };
 
     return (
@@ -79,7 +97,9 @@ export function ChatBar(): JSX.Element {
                     ))}
                 </div>
             </div>
-
+            {typingUser && (
+                <div>{`user is typing...`}</div>
+            )}
             {/* ChatBar */}
             <div className="flex items-center gap-2">
                 {/* Plus icon and menu */}
@@ -89,11 +109,11 @@ export function ChatBar(): JSX.Element {
                     </button>
                     <div className={`absolute bottom-10 -left-1 w-48 bg-white shadow-lg rounded-sm overflow-hidden transition-transform transform ${isMenuOpen ? 'scale-100' : 'scale-0'}`}>
                         {/* Menu Items */}
-                        <MediaButton />
+                        <MediaButton contactId={contactId} />
                         <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleCameraClick} type="button">
                             <CameraIcon className="h-6 w-6 mr-2" /> Camera
                         </button>
-                        <ContactButton/>
+                        <ContactButton />
                         <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleLocationClick} type="button">
                             <MapPinIcon className="h-6 w-6 mr-2" /> Location
                         </button>
@@ -103,38 +123,58 @@ export function ChatBar(): JSX.Element {
                     </div>
                 </div>
 
-            <form className="flex flex-1 items-center gap-2" onSubmit={handleMessageSend}>
+                <form className="flex flex-1 items-center gap-2" action={sendMessage}>
 
-                {/* Input field with emoji icon */}
-                <div className={`flex-grow flex items-center rounded-full px-4 py-2 transition-all duration-150 ${isLoading? 'bg-gray-400 text-gray-300':'bg-gray-100'}`}>
-                    <input
-                        className="bg-transparent focus:outline-none w-full"
-                        disabled={isLoading}
-                        onChange={(e) => { setMessage(e.target.value); }}
-                        placeholder="Type a message"
-                        type="text"
-                        value={message}
-                    />
-                    <FaceSmileIcon className="h-6 w-6 text-gray-600 cursor-pointer" onClick={handleEmojiClick} />
-                </div>
+                    {/* Input field with emoji icon */}
+                    <div className={`flex-grow flex items-center rounded-full px-4 py-2 transition-all duration-150 ${isLoading ? 'bg-gray-400 text-gray-300' : 'bg-gray-100'}`}>
+                        <input
+                            className='hidden'
+                            hidden
+                            readOnly
+                            type='text'
+                            name='type'
+                            title='type'
+                            value={messageType}
+                        />
+                        <input
+                            className='hidden'
+                            hidden
+                            readOnly
+                            type='text'
+                            name='contact_id'
+                            title='contact_id'
+                            value={contactId}
+                        />
+                        <input
+                            className="bg-transparent focus:outline-none w-full"
+                            disabled={isLoading}
+                            onChange={handleInputChange}
+                            placeholder="Type a message"
+                            type="text"
+                            name="text"
+                            title='text'
+                            value={message}
+                        />
+                        <FaceSmileIcon className="h-6 w-6 text-gray-600 cursor-pointer" onClick={handleEmojiClick} />
+                    </div>
 
-                {/* Conditional rendering for Submit/Microphone button */}
-                {message ? (
-                    <button
-                        className="h-10 w-10 rounded-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300"
-                        disabled={isLoading}
-                        type="submit"
-                    >
-                        {isLoading ? (
-                            <Spinner />
-                        ) : (
-                            <ArrowRightIcon className="h-5 w-5 text-white" />
-                        )}
-                    </button>
-                ) : (
-                    <AudioButton />
-                )}
-            </form>
+                    {/* Conditional rendering for Submit/Microphone button */}
+                    {message ? (
+                        <button
+                            className="h-10 w-10 rounded-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300"
+                            disabled={isLoading}
+                            type="submit"
+                        >
+                            {isLoading ? (
+                                <Spinner />
+                            ) : (
+                                <ArrowRightIcon className="h-5 w-5 text-white" />
+                            )}
+                        </button>
+                    ) : (
+                        <AudioButton />
+                    )}
+                </form>
             </div>
         </div>
     );

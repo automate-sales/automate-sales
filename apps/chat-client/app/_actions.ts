@@ -2,6 +2,7 @@
 
 import { PrismaClient } from "database";
 const prisma = new PrismaClient()
+import { generateMessage } from "sdk/whatsapp";
 
 export async function searchAction(queryString: string) {
     const searchResults = await prisma.contact.findMany({

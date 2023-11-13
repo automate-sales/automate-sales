@@ -1,5 +1,5 @@
-import { Chat, PrismaClient } from "database"
-import type { ChatObject, WhatsappContact } from "sdk/types"
+import { Chat, Prisma, PrismaClient } from "database"
+import type { ChatItem, ChatObject, WhatsappContact } from "sdk/types"
 import { normalizePhoneNumber } from "sdk/utils"
 const prisma = new PrismaClient()
 
@@ -31,7 +31,7 @@ export const getOrCreateContact = async(contact: WhatsappContact, chatDate: Date
     return res
 }
 
-export const createChat = async(chat: ChatObject, contact: WhatsappContact)=> {
+export const createReceivedChat = async(chat: ChatItem, contact: WhatsappContact)=> {
     const whatsapp_id = contact.wa_id
     const result = await prisma.$transaction(async (prisma) => {
         // Create or connect the contact and create the chat
@@ -60,4 +60,32 @@ export const createChat = async(chat: ChatObject, contact: WhatsappContact)=> {
         return newChat;
     });
     return result;
+}
+
+export const createSentChat = async(chat: ChatItem, contactId: string)=> {
+    const result = await prisma.$transaction(async (prisma) => {
+        // Create or connect the contact and create the chat
+        const newChat = await prisma.chat.create({
+            data: {
+                ...chat,
+                contact: {connect: { id: contactId } },
+            },
+            include: { contact: true },
+        });
+        // update the contacts last_chat_date
+        await prisma.contact.update({
+            where: { id: newChat.contact_id },
+            data: { last_chat_date: chat.chatDate }
+        });
+        return newChat;
+    });
+    return result;
+}
+
+export const updateChat = async(chatId: number, fields: { [key: string]: any })=> {
+    return await prisma.chat.update({
+        where: { id: chatId },
+        data: fields as Prisma.ChatUpdateInput,
+        include: { contact: true },
+    })
 }

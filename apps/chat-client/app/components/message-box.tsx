@@ -17,7 +17,7 @@ import Image from "next/image";
 import { AudioMessage } from "./audio-message";
 
 const mediaUrl = (mediaKey: string | null): string => {
-  return mediaKey ? `${process.env.NEXT_PUBLIC_MINIO_ENDPOINT}/${process.env.NEXT_PUBLIC_PROJECT_NAME}-media/${mediaKey}` : '';
+  return mediaKey ? `${process.env.NEXT_PUBLIC_MEDIA_BASE_URL}/${process.env.NEXT_PUBLIC_PROJECT_NAME}-media/${mediaKey}` : '';
 }
 
 function IconMessage({ message, icon }: { message: Chat, icon: JSX.Element }): JSX.Element{
@@ -39,7 +39,7 @@ function ImageMessage({ message }: { message: Chat  }): JSX.Element{
   return message.media ? (
     <div className="flex items-center justify-center">
       <Link href={mediaUrl(message.media)} target="_blank">
-          <Image alt={message.name || ''} className="w-32 h-auto" height={200} src={mediaUrl(message.media)} width={200} />
+          <Image alt={message.name || ''} className="w-32 h-auto" height={200} src={message.media || ''} width={200} />
       </Link>
     </div>
   ) : (
@@ -120,6 +120,8 @@ function MessageBody({ message }: { message: Chat }): JSX.Element {
   switch (message.type) {
     case 'image':
       return <ImageMessage message={message} />;
+    case 'media':
+      return <ImageMessage message={message} />;
     case 'video':
       return <VideoMessage message={message} />;
     case 'audio':
@@ -162,9 +164,9 @@ function MessageStatus({ message }: { message: Chat }): JSX.Element{
   }
 };
 
-export default function MessageBox({ message, index }: { message: Chat; index: number }) : JSX.Element {
+export default function MessageBox({ message }: { message: Chat }) : JSX.Element {
   return (
-    <div className={`flex ${message.direction === 'outgoing' ? 'flex-row-reverse' : 'flex-row'} items-center mb-2`} key={index}>
+    <div className={`flex ${message.direction === 'outgoing' ? 'flex-row-reverse' : 'flex-row'} items-center mb-2`}>
       <div className={`${message.direction === 'outgoing' ? 'bg-green-200' : 'bg-white'} rounded-sm p-4 max-w-xs `}>
         <div className="flex items-center justify-end pb-1">
           {message.direction === 'outgoing' && (
