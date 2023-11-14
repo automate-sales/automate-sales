@@ -17,7 +17,9 @@
     "sdk": "workspace:*",
     "@heroicons/react": "^2.0.18",
     "socket.io-client": "^4.7.2",
-    "next-auth": "4.24.5"
+    "next-auth": "4.24.5",
+    "nodemailer": "latest",
+    "@auth/prisma-adapter": "latest"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^14.0.1",
