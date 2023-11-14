@@ -2,7 +2,6 @@
 
 import { PrismaClient } from "database";
 const prisma = new PrismaClient()
-import { generateMessage } from "sdk/whatsapp";
 
 export async function searchAction(queryString: string) {
     const searchResults = await prisma.contact.findMany({
@@ -69,5 +68,18 @@ export async function getContactsAction(){
         },
       },
     },
+  });
+}
+
+export async function getChatHistory(contact_id: string, skip?: number) {
+  return await prisma.chat.findMany({
+      where: {
+          contact_id: contact_id
+      },
+      orderBy: {
+          createdAt: 'desc',
+      },
+      take: 20,
+      skip: skip ? skip : 0,
   });
 }

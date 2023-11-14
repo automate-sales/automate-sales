@@ -16,7 +16,8 @@
     "database": "workspace:*",
     "sdk": "workspace:*",
     "@heroicons/react": "^2.0.18",
-    "socket.io-client": "^4.7.2"
+    "socket.io-client": "^4.7.2",
+    "next-auth": "4.24.5"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^14.0.1",

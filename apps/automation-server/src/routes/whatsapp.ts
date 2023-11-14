@@ -8,7 +8,7 @@ import express, { Router, Request, Response } from 'express';
 import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
 import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
 import type  { ChatItem, ChatObject, WhatsappMediaObject, WhatsappWebhook } from 'sdk/types'
-import { createReceivedChat, createSentChat, updateChat } from '../utils/prisma';
+import { createReceivedChat, createSentChat, updateChat, updateChatByWaId } from '../utils/prisma';
 
 import { Server as SocketIOServer } from 'socket.io';
 
@@ -57,9 +57,9 @@ export default function(io: SocketIOServer){
                     const value = change.value
                     logger.info(value, 'recieved a whatsapp event')
                     if(value){
-                        const wa_contact = value.contacts[0]
                         // process a message
                         if(value.messages){
+                            const wa_contact = value.contacts[0]
                             logger.info('MESSAGE RECEIVED')
                             for(let message of value.messages){
                                 logger.info(`MESSAGE ID: ${message.id}`)
@@ -94,7 +94,9 @@ export default function(io: SocketIOServer){
                         } else if(value.statuses){
                             logger.info('STATUS UPDATE')
                             for(let status of value.statuses){
-                                logger.info('STATUS ID: ', status.id)
+                                logger.info(status, 'STATUS: ')
+                                const chat = await updateChatByWaId(status.id, { status: status.status })
+                                io.emit('status_update', chat)
                             }
                         } else {
                             logger.info(value, 'recieved a unrecognized whatsapp event')
@@ -139,11 +141,12 @@ export default function(io: SocketIOServer){
         try{
             const { fields, files } = await formPromise(req)
             logger.info(fields, 'form fields')
-            const contactId = fields?.contact_id?.[0] ? fields.contact_id[0] : null
+            const contactId = fields?.contact_id? fields.contact_id[0] : null
             if(!contactId) throw new Error('No contact_id found in form data')
             let obj = generateMessage(fields, files)
             const {media, ...item} = obj
             let chat = await createSentChat(item, contactId)
+            logger.info(chat, 'CHAT ! ')
             if(media){
                 //upload to s3
                 logger.info(media, 'media file')
@@ -159,8 +162,9 @@ export default function(io: SocketIOServer){
                 chat = await updateChat(chat.id, obj)
                 logger.info(res, 'chat updated with media')
             }
-            const phoneNumber = chat.contact.phone_number
+            const phoneNumber = chat.contact.whatsapp_id
             const whatsappMessage = await sendMessage(phoneNumber, chat.text, media)
+            logger.info(whatsappMessage, 'whatsapp message')
             chat = await updateChat(chat.id, { whatsapp_id: whatsappMessage.messages[0].id, status: 'pending' })
             io.emit('new_message', chat)
             return res.status(200).send('Message sent')

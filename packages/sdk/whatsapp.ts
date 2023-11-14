@@ -211,7 +211,6 @@ export async function sendMessage(
     message?: string | null, // text body of the message
     media?: null| File, // id of the whatsapp media object
 ): Promise<WhatsAppMessageResponse>{
-
     if(!message && !media || !phone) throw new Error('Must provide a message or media and a phone number')
     const mediaId = media ? await uploadToWhatsAppMediaAPI(media) : null
     const fileName = media?.originalFilename || media?.mimetype ? `${media?.newFilename}.${media?.mimetype?.split('/')[1]}` : media?.newFilename
