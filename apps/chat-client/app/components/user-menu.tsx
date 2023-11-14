@@ -3,19 +3,17 @@
 import { useState } from 'react';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 
 function UserMenu({ user }: { user: { 
-    email: string,
+    email?: string,
     name?: string,
-    id?: string
+    image?: string,
+    id?: string,
 } | null }) : JSX.Element {
 	const [open, setOpen] = useState(false)
     const router = useRouter()
     
-    async function signOut() : Promise<void> {
-        throw new Error('Function not implemented.');
-    }
-
 	return (
         <div>
             <button onClick={() => { setOpen(!open); }} type='button'>
@@ -32,10 +30,11 @@ function UserMenu({ user }: { user: {
                     type='button'>{`monday: ${user.id}`}
                 </button> : null}
                 {user ?
-                    <button onClick={() => { signOut()
-                        .then(() => { console.info('Ha cerrado su sesión'); })
-                        .catch(() => { console.info('Error cerrando la sesión'); })
-                    }} title="Cerrar sesión" type='button' /> :
+                    <button onClick={() => { signOut({
+                        redirect: true,
+                        callbackUrl: '/'
+                    })
+                    }} title="Cerrar sesión" type='button'>Cerrar sesión</button> :
                     <button onClick={() => { router.push('/api/auth/signin'); }} type='button'>Iniciar sesión</button>
                 }
             </div>
