@@ -12,9 +12,9 @@ export default function Page({ params, searchParams }: { params: { id: string },
       <div className="bg-slate-400 flex flex-col flex-1">
         <TopBar />
         <ContactInfo contactId={params.id} />
-        <div className="flex-col flex-1 bg-slate-500 lg:h-screen lg:overflow-auto">
+        
           <ChatHistory id={params.id} />
-        </div>
+
         <ChatBar contactId={params.id}/>
       </div>
     </div>

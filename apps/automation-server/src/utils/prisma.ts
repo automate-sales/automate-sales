@@ -89,3 +89,11 @@ export const updateChat = async(chatId: number, fields: { [key: string]: any })=
         include: { contact: true },
     })
 }
+
+export const updateChatByWaId = async(waId: string, fields: { [key: string]: any })=> {
+    return await prisma.chat.update({
+        where: { whatsapp_id: waId },
+        data: fields as Prisma.ChatUpdateInput,
+        include: { contact: true },
+    })
+}
