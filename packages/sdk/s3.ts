@@ -142,7 +142,8 @@ export const getTypeFromMime =(mimeType?: string | null) : string=> {
         'audio/mp4', 
         'audio/mpeg', 
         'audio/amr', 
-        'audio/ogg'
+        'audio/ogg',
+        'audio/webm',
     ];
     const imageTypes = [
         'image/png', 
@@ -167,7 +168,7 @@ export const getTypeFromMime =(mimeType?: string | null) : string=> {
         'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     ];
     if (mimeType) {
-        if (audioTypes.includes(mimeType) || mimeType.startsWith('audio/ogg')) return 'audio';
+        if (audioTypes.includes(mimeType) || mimeType.startsWith('audio')) return 'audio';
         else if (imageTypes.includes(mimeType)) return 'image';
         else if(videoTypes.includes(mimeType)) return 'video';
         else if (mimeType === 'image/webp') return 'sticker';
