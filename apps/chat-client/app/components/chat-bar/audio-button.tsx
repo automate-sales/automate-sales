@@ -10,7 +10,7 @@ interface UploadResponse {
     body: string;
   }
 
-export function AudioButton(): JSX.Element {
+export function AudioButton({handleFileChange}:{handleFileChange: any}): JSX.Element {
     const [isRecording, setIsRecording] = useState(false);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -19,26 +19,12 @@ export function AudioButton(): JSX.Element {
   // Function to upload the audio file to the API
   const uploadAudio = async (): Promise<void> => {
     if (audioBlob) {
-      const formData = new FormData();
-      formData.append('file', audioBlob, 'audio-recording.webm');
+      // Adjust the file name and MIME type
+      const file = new File([audioBlob], 'captured-audio.webm', { type: 'audio/webm;codecs=opus' });
+      handleFileChange(null, file);
 
-      try {
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await response.json() as UploadResponse;
-        if (response.ok) {
-          console.log('File uploaded successfully.', data);
-          // Clear the audio data after successful upload
-          setAudioBlob(null);
-          setAudioUrl(null);
-        } else {
-          console.error('Upload failed:', data.error);
-        }
-      } catch (error) {
-        console.error('There was an error uploading the file:', error);
-      }
+      setAudioBlob(null);
+      setAudioUrl(null);
     }
   };
 
@@ -46,7 +32,8 @@ export function AudioButton(): JSX.Element {
   const startRecording = async (): Promise<void> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const options = { mimeType: 'audio/webm;codecs=opus' };
+      const recorder = new MediaRecorder(stream, options);
       setMediaRecorder(recorder);
 
       recorder.ondataavailable = (event) => {

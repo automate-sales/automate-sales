@@ -9,6 +9,7 @@ import { createReadStream } from 'fs'
 import FormData from 'form-data';
 import axios from 'axios';
 import { getTypeFromMime } from './s3';
+import { convertWebmToOgg } from './media';
 
 
 export const validateMetaSignature = (payload: string, signature: string) => {
@@ -212,6 +213,11 @@ export async function sendMessage(
     media?: null| File, // id of the whatsapp media object
 ): Promise<WhatsAppMessageResponse>{
     if(!message && !media || !phone) throw new Error('Must provide a message or media and a phone number')
+    console.log('WHATSAP MEDIA FILE: ', media)
+    if(media && media.mimetype?.startsWith('audio/webm')) {
+      media = await convertWebmToOgg(media)
+      console.log('CONVERTED MEDIA FILE: ', media)
+    } 
     const mediaId = media ? await uploadToWhatsAppMediaAPI(media) : null
     console.log('MEDIA ID: ', mediaId)
     const fileName = media?.originalFilename || media?.mimetype ? `${media?.newFilename}.${media?.mimetype?.split('/')[1]}` : media?.newFilename
