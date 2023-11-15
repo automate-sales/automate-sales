@@ -16,16 +16,13 @@ import { formatDate } from "sdk/utils";
 import Image from "next/image";
 import { AudioMessage } from "./audio-message";
 
-const mediaUrl = (mediaKey: string | null): string => {
-  return mediaKey ? `${process.env.NEXT_PUBLIC_MEDIA_BASE_URL}/${process.env.NEXT_PUBLIC_PROJECT_NAME}-media/${mediaKey}` : '';
-}
 
 function IconMessage({ message, icon }: { message: Chat, icon: JSX.Element }): JSX.Element{
   return (
     <div className="flex items-center justify-center">
       <Link 
         className="flex flex-col items-center" 
-        href={mediaUrl(message.media)} 
+        href={message.media} 
         target="_blank" 
       >
           <span className="pb-1">{message.name}</span>
@@ -38,7 +35,7 @@ function IconMessage({ message, icon }: { message: Chat, icon: JSX.Element }): J
 function ImageMessage({ message }: { message: Chat  }): JSX.Element{
   return message.media ? (
     <div className="flex items-center justify-center">
-      <Link href={mediaUrl(message.media)} target="_blank">
+      <Link href={message.media} target="_blank">
           <Image alt={message.name || ''} className="w-32 h-auto" height={200} src={message.media || ''} width={200} />
       </Link>
     </div>
@@ -51,7 +48,7 @@ function VideoMessage({ message }: { message: Chat  }): JSX.Element{
   return message.media ? (
     <div className="flex items-center justify-center">
       <video className="w-32 h-auto" controls height={120} width={96}>
-        <source src={mediaUrl(message.media)} />
+        <source src={message.media} />
         <track kind="captions" />
       </video>
     </div>
