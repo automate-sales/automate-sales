@@ -9,7 +9,8 @@ import { getCurrentUser } from "../../utils";
 export default async function Page({ params, searchParams }: { params: { id: string }, searchParams: any }): JSX.Element {
   const sessionToken = searchParams?.token ? searchParams.token : null
   const user = await getCurrentUser(sessionToken)
-  if(!user) return redirect('/error?' + new URLSearchParams({error: 'Unauthorized - Log in to continue'}))
+  
+  if(!user) return redirect('/?' + new URLSearchParams({error: 'Unauthorized - Log in to continue'}))
   return (
     <div className="flex h-screen">
       <SideBar params={params} searchParams={searchParams} />
@@ -19,7 +20,7 @@ export default async function Page({ params, searchParams }: { params: { id: str
         
           <ChatHistory id={params.id} />
 
-        <ChatBar contactId={params.id}/>
+        <ChatBar contactId={params.id} user={user}/>
       </div>
     </div>
   );

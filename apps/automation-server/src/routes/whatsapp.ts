@@ -128,7 +128,10 @@ export default function(io: SocketIOServer){
 
     const formPromise = (req: Request): Promise<{ fields: formidable.Fields<string>, files: formidable.Files<string> }> => {
         return new Promise((resolve, reject) => {
-            const form = formidable({})
+            const form = formidable({
+                allowEmptyFiles: true,
+                minFileSize: 0
+            })
             form.parse(req, (err, fields, files) => {
                 if (err) reject(err)
                 resolve({ fields, files })
@@ -138,7 +141,9 @@ export default function(io: SocketIOServer){
 
     // sends a message through whatsapp business
     router.post("/message", async (req, res, next) => {
+        console.log('MESSAGE ENDPOINT TRIGERRED ')
         try{
+            logger.info('MESSAGE ENDPOINT TRIGERRED ')
             const { fields, files } = await formPromise(req)
             logger.info(fields, 'form fields')
             const contactId = fields?.contact_id? fields.contact_id[0] : null
@@ -147,7 +152,7 @@ export default function(io: SocketIOServer){
             const {media, ...item} = obj
             let chat = await createSentChat(item, contactId)
             logger.info(chat, 'CHAT ! ')
-            if(media){
+            if(media && media.size > 0){
                 //upload to s3
                 logger.info(media, 'media file')
                 const fileName = media.originalFilename || media.mimetype ? `${media.newFilename}.${media.mimetype?.split('/')[1]}` : media.newFilename

@@ -2,6 +2,7 @@ import { SideBar } from './components/side-bar';
 import { getCurrentUser } from './utils';
 import { redirect } from 'next/navigation';
 import { TopBar } from './components/top-bar';
+import Alert from './components/alert';
 
 export default async function Page({params, searchParams}): Promise<JSX.Element> {
   const sessionToken = searchParams?.token ? searchParams.token : null
@@ -12,6 +13,7 @@ export default async function Page({params, searchParams}): Promise<JSX.Element>
       <SideBar params={params} searchParams={searchParams} />
       <div className="bg-slate-400 flex flex-col flex-1">
         <TopBar user={user}/>
+        <Alert message={searchParams?.error} type='error' />
         <div className="flex w-full h-full justify-center">
           <div>Hola</div>
         </div>

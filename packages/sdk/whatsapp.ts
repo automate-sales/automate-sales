@@ -213,6 +213,7 @@ export async function sendMessage(
 ): Promise<WhatsAppMessageResponse>{
     if(!message && !media || !phone) throw new Error('Must provide a message or media and a phone number')
     const mediaId = media ? await uploadToWhatsAppMediaAPI(media) : null
+    console.log('MEDIA ID: ', mediaId)
     const fileName = media?.originalFilename || media?.mimetype ? `${media?.newFilename}.${media?.mimetype?.split('/')[1]}` : media?.newFilename
     const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_ID}/messages`
     const messageType = getTypeFromMime(media?.mimetype)
@@ -276,24 +277,37 @@ export const downloadFileAsArrayBuffer = async (url: URL | string): Promise<Arra
 };
 
 export async function uploadToWhatsAppMediaAPI(file: File) {
+    console.log('UPLOADING TO WHATSAPP MEDIA API ', file)
     const fileStream = createReadStream(file.filepath);
     const fileName = file.originalFilename || file.mimetype ? `${file.newFilename}.${file.mimetype?.split('/')[1]}` : file.newFilename
     const formData = new FormData();
     formData.append('file', fileStream, fileName);
+    formData.append('type', file.mimetype);
+    formData.append('messaging_product', 'whatsapp');
     const headers = {
         'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
         ...formData.getHeaders() // This sets the 'Content-Type' header to 'multipart/form-data'
     }
-    const mediaResponse = await axios.post(
-        `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_ID}/media`,
-        formData,
-        { headers }
-    );
-    if(mediaResponse.status !== 200) {
-        throw new Error(`Error uploading to the whatsapp media API: ${mediaResponse.statusText}`)
+    console.log('HEADERS: ', headers)
+    try {
+        const mediaResponse = await axios.post(
+            `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_ID}/media`,
+            formData,
+            { headers }
+        );
+        console.log('RESPONSE !!!!: ', mediaResponse)
+        if(mediaResponse.status !== 200) {
+            throw new Error(`Error uploading to the whatsapp media API: ${mediaResponse.statusText}`)
+        }
+        if (!mediaResponse.data.id) throw new Error('Failed to upload the PDF to WhatsApp Media API');
+        return mediaResponse.data.id;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.error('Error response data:', error.response?.data);
+        }
+        throw error;
     }
-    if (!mediaResponse.data.id) throw new Error('Failed to upload the PDF to WhatsApp Media API');
-    return mediaResponse.data.id;
+    
 }
 
 

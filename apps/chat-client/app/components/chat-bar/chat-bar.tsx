@@ -1,22 +1,16 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PaperClipIcon, FaceSmileIcon, CameraIcon, StarIcon, ChevronRightIcon, ArrowRightIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { MediaButton } from './media-button';
 import { AudioButton } from './audio-button';
 import { ContactButton } from './contact-button';
-import { generateMessage } from 'sdk/whatsapp';
-
 import { io, Socket} from "socket.io-client";
+import { sendMessage } from '../../_actions';
+import { TemplatesMenu } from './templates-menu';
+
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
 let socket = null as Socket | null;
-
-interface Template {
-    name: string;
-}
-
-const templates: Template[] = [{ name: 'welcome' }, { name: 'hello' }];
-
 
 function Spinner(): JSX.Element {
     return (
@@ -27,13 +21,18 @@ function Spinner(): JSX.Element {
     )
 }
 
-
-export function ChatBar({contactId}: {contactId: string}): JSX.Element {
+export function ChatBar({contactId, user}: {contactId: string, user: {
+    name?: string;
+    email?: string;
+    image?: string;
+}}): JSX.Element {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-    const [isTemplatesOpen, setIsTemplatesOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    
     const [message, setMessage] = useState<string>("");
+    const [media, setMedia] = useState<File|null>(null);
     const [messageType, setMessageType] = useState<string>("text");
+
     const [typingUser, setTypingUser] = useState<string | null>(null);
 
     const handleCameraClick = (): void => { console.log('Camera clicked'); };
@@ -41,11 +40,7 @@ export function ChatBar({contactId}: {contactId: string}): JSX.Element {
     const handleLocationClick = (): void => { console.log('Location clicked'); };
     const handleNewStickerClick = (): void => { console.log('New Sticker clicked'); };
     const handleEmojiClick = (): void => { console.log('Emoji clicked'); };
-
-    const handleTemplateClick = (templateName: string): void => {
-        console.log(`${templateName} template clicked`);
-        setMessage(templateName);
-    };
+    const userName = user.name ? user.name : user.email.split('@')[0]
 
     useEffect(() => {
         socket = io(SERVER_URL);  
@@ -62,120 +57,116 @@ export function ChatBar({contactId}: {contactId: string}): JSX.Element {
         const currentMessage = e.target.value;
         setMessage(currentMessage);
         const isTyping = currentMessage.length > 0;
-        socket.emit('typing', { user: 'YourUsername', typing: isTyping });
+        socket.emit('typing', { user: userName, typing: isTyping });
     };
 
-    async function sendMessage(formData: FormData) {
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files[0];
+        if (file) {
+          setMedia(file);
+          setMessageType('media')
+        } else {
+          setMedia(null); // Clear the media state if no file is selected
+        }
+    };
 
-        const endpoint = `${process.env.NEXT_PUBLIC_SERVER_URL}/whatsapp/message`
-
-        setIsLoading(true);
-        const res = await fetch(endpoint, {
-            method: 'POST',
-            body: formData
-        })
-        console.log(res)
-
-        setIsLoading(false);
+    async function submitForm(formData: FormData) {
         setTypingUser(null);
-        setMessage('');
+        try{
+            console.log('submitting form')
+            await sendMessage(formData)
+            setMessage("");
+            setMedia(null);
+        } catch (error) {
+            console.error(error)
+        }
     };
 
     return (
-        <div className="flex-col bg-slate-200 pt-2 pb-5 px-2 gap-2">
-            {/* Templates Menu */}
-            <button className="flex items-center pb-2" onClick={() => { setIsTemplatesOpen(!isTemplatesOpen); }} type="button">
-                <span>Templates</span>
-                <ChevronRightIcon className={`h-5 w-5 transform ${isTemplatesOpen ? 'rotate-90' : ''} transition-transform duration-300`} />
-            </button>
-            <div className={`transition-[max-height] duration-500 ease-in-out ${isTemplatesOpen ? 'max-h-56' : 'max-h-0'} overflow-hidden`}>
-                <div className='pt-1 pb-4 flex flex-wrap gap-2'>
-                    {templates.map((template) => (
-                        <button className="bg-gray-100 hover:bg-gray-200 text-center p-1 rounded-sm" key={template.name} onClick={() => handleTemplateClick(template.name)} type="button">
-                            {template.name}
-                        </button>
-                    ))}
-                </div>
-            </div>
-            {typingUser && (
-                <div>{`user is typing...`}</div>
-            )}
-            {/* ChatBar */}
-            <div className="flex items-center gap-2">
-                {/* Plus icon and menu */}
-                <div className="relative">
-                    <button className="text-gray-600 hover:text-gray-800" onClick={() => { setIsMenuOpen(!isMenuOpen); }} type="button">
-                        <PaperClipIcon className="h-6 w-6" />
-                    </button>
-                    <div className={`absolute bottom-10 -left-1 w-48 bg-white shadow-lg rounded-sm overflow-hidden transition-transform transform ${isMenuOpen ? 'scale-100' : 'scale-0'}`}>
-                        {/* Menu Items */}
-                        <MediaButton contactId={contactId} />
-                        <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleCameraClick} type="button">
-                            <CameraIcon className="h-6 w-6 mr-2" /> Camera
-                        </button>
-                        <ContactButton />
-                        <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleLocationClick} type="button">
-                            <MapPinIcon className="h-6 w-6 mr-2" /> Location
-                        </button>
-                        <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleNewStickerClick} type="button">
-                            <StarIcon className="h-6 w-6 mr-2" /> New Sticker
-                        </button>
+        <div className="bg-slate-200 pt-2 pb-5 px-2 gap-2">
+            <form className='flex-col' action={submitForm}>
+                <TemplatesMenu />
+                <div className="flex-col">
+                    <div className='pb-1'>
+                        {typingUser && (
+                            <div className='text-sm text-gray-500'>{`${typingUser} is typing...`}</div>
+                        )}
+                    </div>
+                    {/* ChatBar */}
+                    <div className="flex flex-1 items-center gap-2">
+
+                        {/* Plus icon and menu */}
+                        <div className="relative">
+                            <button className="text-gray-600 hover:text-gray-800" onClick={() => { setIsMenuOpen(!isMenuOpen); }} type="button">
+                                <PaperClipIcon className="h-6 w-6" />
+                            </button>
+                            <div className={`absolute bottom-10 -left-1 w-48 bg-white shadow-lg rounded-sm overflow-hidden transition-transform transform ${isMenuOpen ? 'scale-100' : 'scale-0'}`}>
+                                {/* Menu Items */}
+                                <MediaButton handleFileChange={handleFileChange}/>
+                                <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleCameraClick} type="button">
+                                    <CameraIcon className="h-6 w-6 mr-2" /> Camera
+                                </button>
+                                <ContactButton />
+                                <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleLocationClick} type="button">
+                                    <MapPinIcon className="h-6 w-6 mr-2" /> Location
+                                </button>
+                                <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleNewStickerClick} type="button">
+                                    <StarIcon className="h-6 w-6 mr-2" /> New Sticker
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className={`flex-grow flex items-center rounded-full px-4 py-2 transition-all duration-150 ${isLoading ? 'bg-gray-400 text-gray-300' : 'bg-gray-100'}`}>
+                            <input
+                                className='hidden'
+                                hidden
+                                readOnly
+                                type='text'
+                                name='type'
+                                title='type'
+                                value={messageType}
+                            />
+                            <input
+                                className='hidden'
+                                hidden
+                                readOnly
+                                type='text'
+                                name='contact_id'
+                                title='contact_id'
+                                value={contactId}
+                            />
+                            <input
+                                className="bg-transparent focus:outline-none w-full"
+                                disabled={isLoading}
+                                onChange={handleInputChange}
+                                placeholder="Type a message"
+                                type="text"
+                                name="text"
+                                title='text'
+                                value={message}
+                            />
+                            <FaceSmileIcon className="h-6 w-6 text-gray-600 cursor-pointer" onClick={handleEmojiClick} />
+                        </div>
+                        
+                        {message || media ? (
+                            <button
+                                className="h-10 w-10 rounded-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300"
+                                disabled={isLoading}
+                                type="submit"
+                            >
+                                {isLoading ? (
+                                    <Spinner />
+                                ) : (
+                                    <ArrowRightIcon className="h-5 w-5 text-white" />
+                                )}
+                            </button>
+                        ) : (
+                            <AudioButton />
+                        )}
+
                     </div>
                 </div>
-
-                <form className="flex flex-1 items-center gap-2" action={sendMessage}>
-
-                    {/* Input field with emoji icon */}
-                    <div className={`flex-grow flex items-center rounded-full px-4 py-2 transition-all duration-150 ${isLoading ? 'bg-gray-400 text-gray-300' : 'bg-gray-100'}`}>
-                        <input
-                            className='hidden'
-                            hidden
-                            readOnly
-                            type='text'
-                            name='type'
-                            title='type'
-                            value={messageType}
-                        />
-                        <input
-                            className='hidden'
-                            hidden
-                            readOnly
-                            type='text'
-                            name='contact_id'
-                            title='contact_id'
-                            value={contactId}
-                        />
-                        <input
-                            className="bg-transparent focus:outline-none w-full"
-                            disabled={isLoading}
-                            onChange={handleInputChange}
-                            placeholder="Type a message"
-                            type="text"
-                            name="text"
-                            title='text'
-                            value={message}
-                        />
-                        <FaceSmileIcon className="h-6 w-6 text-gray-600 cursor-pointer" onClick={handleEmojiClick} />
-                    </div>
-
-                    {/* Conditional rendering for Submit/Microphone button */}
-                    {message ? (
-                        <button
-                            className="h-10 w-10 rounded-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300"
-                            disabled={isLoading}
-                            type="submit"
-                        >
-                            {isLoading ? (
-                                <Spinner />
-                            ) : (
-                                <ArrowRightIcon className="h-5 w-5 text-white" />
-                            )}
-                        </button>
-                    ) : (
-                        <AudioButton />
-                    )}
-                </form>
-            </div>
+            </form>
         </div>
     );
 };

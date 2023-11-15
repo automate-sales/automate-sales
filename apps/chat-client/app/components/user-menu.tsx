@@ -23,7 +23,7 @@ function UserMenu({ user }: { user: {
                         <UserCircleIcon className='h-8 w-8' />
                 }
             </button>
-            <div className={`right-0 bg-white mt-1 p-2 ${open ? 'fixed' : 'hidden'}`}>
+            <div className={`right-0 bg-white mt-1 p-2 z-10 ${open ? 'fixed' : 'hidden'}`}>
                 {user ? <div>{user.name? user.name : user.email}</div> : null}
                 {user?.id ? <button 
                     onClick={() => { router.push(`${process.env.NEXT_PUBLIC_MONDAY_URL}/users/${user.id}`); }} 

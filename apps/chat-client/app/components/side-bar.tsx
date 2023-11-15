@@ -87,22 +87,24 @@ export async function SideBar({params, searchParams}: {params: any, searchParams
 
 
   return (
-    <div className="bg-slate-300 flex flex-col w-0 lg:w-1/4 px-2">
-      <form className='h-14 w-full flex items-center' action={search}>
-      <div className={`flex w-full items-center rounded-full px-2 py-1 transition-all duration-150 bg-gray-100`}>
-          <input
-              className="bg-transparent focus:outline-none w-full"
-              placeholder="Search"
-              type="text"
-              name="query"
-              title='query'
-          />
-          <button type="submit">
-            <MagnifyingGlassIcon className="h-6 w-6 text-gray-600" />
-          </button>
+    <div className="bg-slate-300 flex flex-col w-0 lg:w-1/4">
+      <div className='px-2'>
+        <form className='h-14 w-full flex items-center' action={search}>
+        <div className={`flex w-full items-center rounded-full px-2 py-1 transition-all duration-150 bg-gray-100`}>
+            <input
+                className="bg-transparent focus:outline-none w-full"
+                placeholder="Search"
+                type="text"
+                name="query"
+                title='query'
+            />
+            <button type="submit">
+              <MagnifyingGlassIcon className="h-6 w-6 text-gray-600" />
+            </button>
+        </div>
+        </form>
+        <SideBarContent contacts={contacts} />
       </div>
-      </form>
-      <SideBarContent contacts={contacts} />
     </div>
   );
 }
