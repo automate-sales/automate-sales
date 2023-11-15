@@ -10,11 +10,14 @@
         "node-html-parser" : "^6.1.11",
         "formidable": "^3.5.1",
         "form-data": "latest",
-        "axios": "latest"
+        "axios": "latest",
+        "fluent-ffmpeg": "latest",
+        "@ffmpeg-installer/ffmpeg" : "latest"
     },
     "devDependencies": {
       "typescript": "latest",
-      "@types/formidable": "latest"
+      "@types/formidable": "latest",
+      "@types/fluent-ffmpeg": "latest"
     }
 }
   

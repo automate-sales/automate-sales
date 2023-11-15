@@ -8,6 +8,7 @@ import { ContactButton } from './contact-button';
 import { io, Socket} from "socket.io-client";
 import { sendMessage } from '../../_actions';
 import { TemplatesMenu } from './templates-menu';
+import { CameraButton } from './camera-button';
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
 let socket = null as Socket | null;
@@ -31,6 +32,7 @@ export function ChatBar({contactId, user}: {contactId: string, user: {
     
     const [message, setMessage] = useState<string>("");
     const [media, setMedia] = useState<File|null>(null);
+    const [dynamicMedia, setDynamicMedia] = useState<File|null>(null);
     const [messageType, setMessageType] = useState<string>("text");
 
     const [typingUser, setTypingUser] = useState<string | null>(null);
@@ -60,13 +62,13 @@ export function ChatBar({contactId, user}: {contactId: string, user: {
         socket.emit('typing', { user: userName, typing: isTyping });
     };
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files[0];
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, mediaFile?: File) => {
+        const file = mediaFile ? mediaFile : event.target.files[0];
         if (file) {
           setMedia(file);
           setMessageType('media')
         } else {
-          setMedia(null); // Clear the media state if no file is selected
+          setMedia(null);
         }
     };
 
@@ -74,7 +76,13 @@ export function ChatBar({contactId, user}: {contactId: string, user: {
         setTypingUser(null);
         try{
             console.log('submitting form')
-            await sendMessage(formData)
+            const data = new FormData();
+            data.append('contact_id', contactId);
+            data.append('type', messageType);
+            if(media) data.append('file', media); 
+            else if (message) data.append('text', message);
+            else throw new Error('No message or media to send')
+            await sendMessage(data)
             setMessage("");
             setMedia(null);
         } catch (error) {
@@ -103,9 +111,7 @@ export function ChatBar({contactId, user}: {contactId: string, user: {
                             <div className={`absolute bottom-10 -left-1 w-48 bg-white shadow-lg rounded-sm overflow-hidden transition-transform transform ${isMenuOpen ? 'scale-100' : 'scale-0'}`}>
                                 {/* Menu Items */}
                                 <MediaButton handleFileChange={handleFileChange}/>
-                                <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleCameraClick} type="button">
-                                    <CameraIcon className="h-6 w-6 mr-2" /> Camera
-                                </button>
+                                <CameraButton handleFileChange={handleFileChange} />
                                 <ContactButton />
                                 <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleLocationClick} type="button">
                                     <MapPinIcon className="h-6 w-6 mr-2" /> Location
@@ -161,7 +167,7 @@ export function ChatBar({contactId, user}: {contactId: string, user: {
                                 )}
                             </button>
                         ) : (
-                            <AudioButton />
+                            <AudioButton handleFileChange={handleFileChange} />
                         )}
 
                     </div>

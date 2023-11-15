@@ -1,7 +1,7 @@
 import { CameraIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef, useState } from 'react';
 
-export const CameraButton: React.FC = () => {
+export function CameraButton({handleFileChange}:{handleFileChange: any}){
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [cameraStarted, setCameraStarted] = useState<boolean>(false);
@@ -57,17 +57,11 @@ export const CameraButton: React.FC = () => {
     if (canvasRef.current) {
       canvasRef.current.toBlob(async (blob) => {
         if (blob) {
-          const formData = new FormData();
-          formData.append('file', blob, 'image.jpg');
+          const file = new File([blob], 'captured-image.jpg', { type: 'image/jpeg' });
+          console.log('FIL:EE YEAHHH ', file)
+          handleFileChange(null, file)
 
-          // Replace 'your-api-endpoint' with the endpoint you use to handle the upload to S3
-          const response = await fetch('/your-api-endpoint', {
-            method: 'POST',
-            body: formData,
-          });
-
-          const data = await response.json();
-          console.log(data); // Handle the response from your server
+          // Stop the camera
           if (videoRef.current && videoRef.current.srcObject instanceof MediaStream) {
             videoRef.current.srcObject.getTracks().forEach(track => track.stop());
           }
@@ -77,6 +71,7 @@ export const CameraButton: React.FC = () => {
       }, 'image/jpeg');
     }
   };
+
   console.log('cameraStarted', cameraStarted);
   return (
     <div>
