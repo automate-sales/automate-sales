@@ -70,6 +70,9 @@ export async function SideBar({params, searchParams}: {params: any, searchParams
         },
       },
     },
+    orderBy: {
+      last_chat_date: 'desc',
+    }
   });
 
   async function search(formData: FormData) {

@@ -76,12 +76,14 @@ export function ChatHistoryContent({ chats, contactId } : {chats: Chat[], contac
 
     return (
         <div ref={chatContainerRef} className="flex-col flex-1 bg-slate-500 lg:h-screen lg:overflow-auto" onScroll={handleScroll}>
-        <div ref={chatHistoryRef} className="p-3">
-            <button onClick={getPreviousChats}>get Previous Chats</button>
-            {chatHistory.map((chat) => 
-                <MessageBox key={`chat-${chat.id}`} message={chat} />
-            )}
-        </div>
+            <div className="flex justify-center pt-2">
+                <button className="px-3 py-1 bg-white rounded-sm text-sm text-gray-800" onClick={getPreviousChats}>get previous chats</button>
+            </div>
+            <div ref={chatHistoryRef} className="p-3">
+                {chatHistory.map((chat) => 
+                    <MessageBox key={`chat-${chat.id}`} message={chat} />
+                )}
+            </div>
         </div>
     );
 }
