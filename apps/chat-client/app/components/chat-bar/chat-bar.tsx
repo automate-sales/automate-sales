@@ -9,6 +9,7 @@ import { io, Socket} from "socket.io-client";
 import { sendMessage } from '../../_actions';
 import { TemplatesMenu } from './templates-menu';
 import { CameraButton } from './camera-button';
+import { StickerButton } from './sticker-button';
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
 let socket = null as Socket | null;
@@ -81,6 +82,7 @@ export function ChatBar({contactId, user}: {contactId: string, user: {
             data.append('type', messageType);
             if(media) data.append('file', media); 
             else if (message) data.append('text', message);
+            //else if (template) data.append('template', template);
             else throw new Error('No message or media to send')
             await sendMessage(data)
             setMessage("");
@@ -116,9 +118,7 @@ export function ChatBar({contactId, user}: {contactId: string, user: {
                                 <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleLocationClick} type="button">
                                     <MapPinIcon className="h-6 w-6 mr-2" /> Location
                                 </button>
-                                <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={handleNewStickerClick} type="button">
-                                    <StarIcon className="h-6 w-6 mr-2" /> New Sticker
-                                </button>
+                                <StickerButton handleFileChange={handleFileChange} />
                             </div>
                         </div>
 

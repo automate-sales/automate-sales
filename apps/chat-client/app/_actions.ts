@@ -86,7 +86,7 @@ export async function getChatHistory(contact_id: string, skip?: number) {
 
 export async function sendMessage(formData: FormData) {
   const endpoint = `${process.env.NEXT_PUBLIC_SERVER_URL}/whatsapp/message`
-  console.log('SENDING MESSAGE TO ', endpoint)
+  console.log('SENDING MESSAGE TO ', endpoint, formData)
   const res = await fetch(endpoint, {
       method: 'POST',
       body: formData
