@@ -40,7 +40,11 @@ const mondayAuth = async (mondayToken) => {
 
 export const getCurrentUser = async(
     mondayToken:string|null=null,
-) => {
+) :  Promise<{
+    name?: string;
+    email?: string;
+    image?: string;
+} | null> => {
     try{
         if(mondayToken) return await mondayAuth(mondayToken)
         else {

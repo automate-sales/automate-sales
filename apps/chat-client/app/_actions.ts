@@ -83,3 +83,14 @@ export async function getChatHistory(contact_id: string, skip?: number) {
       skip: skip ? skip : 0,
   });
 }
+
+export async function sendMessage(formData: FormData) {
+  const endpoint = `${process.env.NEXT_PUBLIC_SERVER_URL}/whatsapp/message`
+  console.log('SENDING MESSAGE TO ', endpoint)
+  const res = await fetch(endpoint, {
+      method: 'POST',
+      body: formData
+  })
+  console.log('RESPONSE ! ', res)
+  return true
+};
