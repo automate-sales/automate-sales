@@ -97,3 +97,56 @@ export const updateChatByWaId = async(waId: string, fields: { [key: string]: any
         include: { contact: true },
     })
 }
+
+export const setRespondedChats = async (
+    agent: string, 
+    contact_id: string, 
+    chat_id: number
+) => {
+    // Fetch all unresponded chats up to a certain chat_id
+    const chats = await prisma.chat.findMany({
+        where: {
+            direction: 'incoming',
+            responded: false,
+            contact_id: contact_id,
+            id: { lte: chat_id }
+        }
+    });
+
+    // Update all fetched chats in parallel
+    const updatePromises = chats.map(chat => {
+        return prisma.chat.update({
+            where: { id: chat.id },
+            data: { 
+                responded: true, 
+                respondedAt: new Date(),
+                responded_by: agent
+            }
+        });
+    });
+    return Promise.all(updatePromises);
+}
+
+export const setSeenByChats = async (agent: string, contact_id: string) => {
+    const latestChats = await prisma.chat.findMany({
+        where: {
+            direction: 'incoming',
+            responded: false,
+            contact_id: contact_id,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10
+    });
+    const updatePromises = latestChats.map(item => {
+        return prisma.chat.update({
+            where: { id: item.id },
+            data: { 
+                seen_by: {
+                    [agent]: new Date(),
+                    ...(typeof item.seen_by === 'object' && item.seen_by !== null ? item.seen_by : {})
+                }
+            }
+        });
+    });
+    return Promise.all(updatePromises);
+}

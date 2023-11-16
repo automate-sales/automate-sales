@@ -1,13 +1,14 @@
 import { PrismaClient } from 'database';
-import Link from 'next/link';
 import { SideBarContent } from './side-bar-content';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { searchAction } from '../_actions';
-import { redirect } from 'next/navigation';
+import { RedirectType, redirect } from 'next/navigation';
+import { getCurrentUser } from '../utils';
 
 export async function SideBar({params, searchParams}: {params: any, searchParams: any}): Promise<JSX.Element> {
   console.log('SEARCH PARAMS ', searchParams)
   console.log('PARAMS ', params)
+  const user = await getCurrentUser()
   const prisma = new PrismaClient();
   const query = 'query' in searchParams ? searchParams.query : null;
   const contacts = query ? 
@@ -84,8 +85,7 @@ export async function SideBar({params, searchParams}: {params: any, searchParams
     const searchResults = await searchAction(queryString)
     console.log('SERACH RESULTS: ', searchResults)
     const baseRoute = params.id ? `/contacts/${params.id}` : '/'
-    redirect(`${baseRoute}?${new URLSearchParams({query: queryString})}`)
-    // revalidate cache
+    redirect(`${baseRoute}?${new URLSearchParams({query: queryString})}`, RedirectType.push)
   }
 
 
@@ -106,7 +106,7 @@ export async function SideBar({params, searchParams}: {params: any, searchParams
             </button>
         </div>
         </form>
-        <SideBarContent contacts={contacts} />
+        <SideBarContent contacts={contacts} agent={user.email}/>
       </div>
     </div>
   );

@@ -10,6 +10,8 @@ import { sendMessage } from '../../_actions';
 import { TemplatesMenu } from './templates-menu';
 import { CameraButton } from './camera-button';
 import { StickerButton } from './sticker-button';
+import { Template } from 'database';
+import { TemplateInput } from './template-input';
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
 let socket = null as Socket | null;
@@ -23,25 +25,31 @@ function Spinner(): JSX.Element {
     )
 }
 
-export function ChatBar({contactId, user}: {contactId: string, user: {
-    name?: string;
-    email?: string;
-    image?: string;
-}}): JSX.Element {
+type TemplateObj = {
+    name: string;
+    variables: {
+        [key:string]: string;
+    }
+}
+
+export function ChatBar({contactId, user, templates}: {contactId: string, user: {
+        name?: string;
+        email?: string;
+        image?: string;
+    }, 
+    templates?: Template[]
+}): JSX.Element {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     
+    const [messageType, setMessageType] = useState<string>("text");
     const [message, setMessage] = useState<string>("");
     const [media, setMedia] = useState<File|null>(null);
-    const [dynamicMedia, setDynamicMedia] = useState<File|null>(null);
-    const [messageType, setMessageType] = useState<string>("text");
+    const [template, setTemplate] = useState<TemplateObj|null>(null);
 
     const [typingUser, setTypingUser] = useState<string | null>(null);
 
-    const handleCameraClick = (): void => { console.log('Camera clicked'); };
-    const handleContactClick = (): void => { console.log('Contact clicked'); };
     const handleLocationClick = (): void => { console.log('Location clicked'); };
-    const handleNewStickerClick = (): void => { console.log('New Sticker clicked'); };
     const handleEmojiClick = (): void => { console.log('Emoji clicked'); };
     const userName = user.name ? user.name : user.email.split('@')[0]
 
@@ -73,11 +81,17 @@ export function ChatBar({contactId, user}: {contactId: string, user: {
         }
     };
 
+    const handleTemplateChange = (template: TemplateObj) => {
+        setTemplate(template);
+        setMessageType('template')
+    };
+
     async function submitForm(formData: FormData) {
         setTypingUser(null);
         try{
             console.log('submitting form')
             const data = new FormData();
+            data.append('agent', user.email);
             data.append('contact_id', contactId);
             data.append('type', messageType);
             if(media) data.append('file', media); 
@@ -95,7 +109,7 @@ export function ChatBar({contactId, user}: {contactId: string, user: {
     return (
         <div className="bg-slate-200 pt-2 pb-5 px-2 gap-2">
             <form className='flex-col' action={submitForm}>
-                <TemplatesMenu />
+                <TemplatesMenu templates={templates} handleTemplateChange={handleTemplateChange} />
                 <div className="flex-col">
                     <div className='pb-1'>
                         {typingUser && (
@@ -122,37 +136,23 @@ export function ChatBar({contactId, user}: {contactId: string, user: {
                             </div>
                         </div>
 
-                        <div className={`flex-grow flex items-center rounded-full px-4 py-2 transition-all duration-150 ${isLoading ? 'bg-gray-400 text-gray-300' : 'bg-gray-100'}`}>
-                            <input
-                                className='hidden'
-                                hidden
-                                readOnly
-                                type='text'
-                                name='type'
-                                title='type'
-                                value={messageType}
-                            />
-                            <input
-                                className='hidden'
-                                hidden
-                                readOnly
-                                type='text'
-                                name='contact_id'
-                                title='contact_id'
-                                value={contactId}
-                            />
-                            <input
-                                className="bg-transparent focus:outline-none w-full"
-                                disabled={isLoading}
-                                onChange={handleInputChange}
-                                placeholder="Type a message"
-                                type="text"
-                                name="text"
-                                title='text'
-                                value={message}
-                            />
-                            <FaceSmileIcon className="h-6 w-6 text-gray-600 cursor-pointer" onClick={handleEmojiClick} />
-                        </div>
+                        {
+                            template ? <TemplateInput template={template} isLoading={isLoading}/> : 
+                            <div className={`flex-grow flex items-center rounded-full px-4 py-2 transition-all duration-150 ${isLoading ? 'bg-gray-400 text-gray-300' : 'bg-gray-100'}`}>
+                                <input
+                                    className="bg-transparent focus:outline-none w-full"
+                                    disabled={isLoading}
+                                    onChange={handleInputChange}
+                                    placeholder="Type a message"
+                                    type="text"
+                                    name="text"
+                                    title='text'
+                                    value={message}
+                                />
+                                <FaceSmileIcon className="h-6 w-6 text-gray-600 cursor-pointer" onClick={handleEmojiClick} />
+                            </div>
+
+                        }
                         
                         {message || media ? (
                             <button

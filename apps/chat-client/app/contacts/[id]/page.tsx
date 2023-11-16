@@ -5,11 +5,12 @@ import { ContactInfo } from "../../components/contact-info";
 import { SideBar } from "../../components/side-bar";
 import { TopBar } from "../../components/top-bar";
 import { getCurrentUser } from "../../utils";
+import { getTemplates } from "../../_actions";
 
 export default async function Page({ params, searchParams }: { params: { id: string }, searchParams: any }): JSX.Element {
   const sessionToken = searchParams?.token ? searchParams.token : null
   const user = await getCurrentUser(sessionToken)
-  
+  const templates = await getTemplates()
   if(!user) return redirect('/?' + new URLSearchParams({error: 'Unauthorized - Log in to continue'}))
   return (
     <div className="flex h-screen">
@@ -20,7 +21,7 @@ export default async function Page({ params, searchParams }: { params: { id: str
         
           <ChatHistory id={params.id} />
 
-        <ChatBar contactId={params.id} user={user}/>
+        <ChatBar contactId={params.id} user={user} templates={templates}/>
       </div>
     </div>
   );
