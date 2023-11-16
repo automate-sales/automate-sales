@@ -9,7 +9,7 @@ import { getChatHistory } from "../_actions";
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
 let socket = null as Socket | null;
 
-export function ChatHistoryContent({ chats, contactId } : {chats: Chat[], contactId: string}): JSX.Element {
+export function ChatHistoryContent({ chats, contactId, agent } : {chats: Chat[], contactId: string, agent: string}): JSX.Element {
     const [chatHistory, setChatHistory] = useState(chats);
     const cursor = chatHistory.length;
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -23,6 +23,7 @@ export function ChatHistoryContent({ chats, contactId } : {chats: Chat[], contac
     useEffect(() => {
         socket = io(SERVER_URL);  
         scrollToBottom();
+        socket.emit('seen_by', { contact_id: contactId, agent: agent })
         socket.on('new_message', (newMessage: Chat) => {
           if (newMessage.contact_id === contactId) {
             setChatHistory(prevChatHistory => [...prevChatHistory, newMessage]);

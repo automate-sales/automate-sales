@@ -8,7 +8,7 @@ import express, { Router, Request, Response } from 'express';
 import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
 import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
 import type  { ChatItem, ChatObject, WhatsappMediaObject, WhatsappWebhook } from 'sdk/types'
-import { createReceivedChat, createSentChat, updateChat, updateChatByWaId } from '../utils/prisma';
+import { createReceivedChat, createSentChat, setRespondedChats, updateChat, updateChatByWaId } from '../utils/prisma';
 
 import { Server as SocketIOServer } from 'socket.io';
 
@@ -149,6 +149,7 @@ export default function(io: SocketIOServer){
             const contactId = fields?.contact_id? fields.contact_id[0] : null
             if(!contactId) throw new Error('No contact_id found in form data')
             let obj = generateMessage(fields, files)
+            const agent = fields?.agent? fields.agent[0] : ''
             const {media, ...item} = obj
             let chat = await createSentChat(item, contactId)
             logger.info(chat, 'CHAT ! ')
@@ -172,6 +173,12 @@ export default function(io: SocketIOServer){
             logger.info(whatsappMessage, 'whatsapp message')
             chat = await updateChat(chat.id, { whatsapp_id: whatsappMessage.messages[0].id, status: 'pending' })
             io.emit('new_message', chat)
+            // set responded chats
+            await setRespondedChats(
+                agent,
+                chat.contact_id,
+                chat.id,
+            )
             return res.status(200).send('Message sent')
         } catch(err){
             logger.error(err)
@@ -183,3 +190,4 @@ export default function(io: SocketIOServer){
     })
     return router
 }
+

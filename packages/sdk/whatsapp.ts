@@ -211,6 +211,11 @@ export async function sendMessage(
     phone?: string |null, // valid phone number with whatsapp for the recipient of the message
     message?: string | null, // text body of the message
     media?: null| File, // id of the whatsapp media object
+    template?: {
+        name: string, // name of the template
+        params: string[], // array of strings for the template parameters
+        language: string
+    } | null // template name
 ): Promise<WhatsAppMessageResponse>{
     if(!message && !media || !phone) throw new Error('Must provide a message or media and a phone number')
     console.log('WHATSAP MEDIA FILE: ', media)
@@ -229,6 +234,25 @@ export async function sendMessage(
         type: messageType,
         ...(message? {text: {body: message}} : {}),
         ...(media? {[messageType]: {id: mediaId, ...(messageType === 'document'? {filename: fileName} : {})}} : {}),
+        ...(template? {template: {
+            name: template.name,
+            language: {
+                code: template.language
+            },
+            ...(template.params? {
+                components: [
+                    {
+                    "type": "body",
+                    "parameters": template.params.map(param => {
+                            return {
+                                "type": "text",
+                                "text": param
+                            }
+                        })
+                    }
+                ]
+            } : {})
+        }} : {}),
     }
     const res = await fetch(url , {
         method: 'post',

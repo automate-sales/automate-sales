@@ -58,7 +58,7 @@ export async function searchAction(queryString: string) {
 }
 
 
-export async function getContactsAction(){
+export async function getContacts(){
   return await prisma.contact.findMany({
     include: {
       chats: {
@@ -68,6 +68,9 @@ export async function getContactsAction(){
         },
       },
     },
+    orderBy: {
+      last_chat_date: 'desc',
+    }
   });
 }
 
@@ -94,3 +97,11 @@ export async function sendMessage(formData: FormData) {
   console.log('RESPONSE ! ', res)
   return true
 };
+
+export async function getTemplates() {
+  return await prisma.template.findMany({
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+}

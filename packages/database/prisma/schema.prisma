@@ -115,7 +115,10 @@ model Chat {
   sentiment     Sentiment?
   insights      String[]    @default([])
   responded     Boolean     @default(false)
+  responded_by  String?
+  seen_by       Json?  
   response_time Int?
+  respondedAt  DateTime?
   chatDate      DateTime
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

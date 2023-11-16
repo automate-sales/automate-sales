@@ -11,6 +11,7 @@ import { readFileSync } from 'fs';
 import logger from '../logger';
 import whatsappRoutes from './routes/whatsapp';
 import cors from 'cors';
+import { setSeenByChats } from './utils/prisma';
 
 const PORT = process.env.PORT || 8000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
@@ -54,6 +55,13 @@ io.on('connection', (socket) => {
         console.log('USER TYPING: ', data);
         socket.broadcast.emit('typing', data); // broadcast to all users except the one who is typing
     });
+
+    socket.on('seen_by', (data) => {
+        console.log('USER SEEN BY: ', data);
+        setSeenByChats(data.agent, data.contact_id)
+        .then((res)=> console.log('seen by updated: ', res))
+        .catch((err)=> console.log('error updating seen by: ', err))  
+    }); 
 
     socket.on('disconnect', () => {
       logger.info('user disconnected');
