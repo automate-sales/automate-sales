@@ -17,3 +17,4 @@ config.*.json
 /migrations/whatsapp/whatsapp_chats.json
 /migrations/whatsapp/contacts.json
 /migrations/whatsapp/chats.json
+/dist
