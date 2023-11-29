@@ -91,7 +91,8 @@ export async function SideBar({params, searchParams}: {params: any, searchParams
 
   return (
     <div className="bg-slate-300 flex flex-col w-0 lg:w-1/4">
-      <div className='px-2'>
+      {
+        user && <div className='px-2'>
         <form className='h-14 w-full flex items-center' action={search}>
         <div className={`flex w-full items-center rounded-full px-2 py-1 transition-all duration-150 bg-gray-100`}>
             <input
@@ -106,8 +107,10 @@ export async function SideBar({params, searchParams}: {params: any, searchParams
             </button>
         </div>
         </form>
-        <SideBarContent contacts={contacts} agent={user.email}/>
+        <SideBarContent contacts={contacts} agent={user?.email}/>
       </div>
+      }
+      
     </div>
   );
 }

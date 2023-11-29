@@ -7,7 +7,7 @@ import { TopBar } from "../../components/top-bar";
 import { getCurrentUser } from "../../utils";
 import { getTemplates } from "../../_actions";
 
-export default async function Page({ params, searchParams }: { params: { id: string }, searchParams: any }): JSX.Element {
+export default async function Page({ params, searchParams }: { params: { id: string }, searchParams: any }): Promise<JSX.Element> {
   const sessionToken = searchParams?.token ? searchParams.token : null
   const user = await getCurrentUser(sessionToken)
   const templates = await getTemplates()
