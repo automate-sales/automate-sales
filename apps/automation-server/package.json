@@ -3,14 +3,11 @@
   "version": "0.0.1",
   "description": "A sample NodeJs application to demonstrate Webhooks and capture the notifications into a (csv) format file. This demo includes OAuth2.0",
   "scripts": {
-    "start": "ts-node src/app",
-    "dev": "nodemon",
-    "test": "mocha ./test/**/*.ts",
-    "docker-build": "docker build --no-cache -t automation-server .",
-    "docker-start": "./docker-dev.sh",
-    "server": "docker run -d -p 80:8000 --name automation-server automation-server",
-    "server-https": "docker run -d -p 443:8000 --name automation-server --env SSL_ENABLED=true --env automation-server",
-    "docker-stop": "docker stop automation-server"
+    "dev": "tsx watch src/app.ts",
+    "build": "node build.js",
+    "start": "node dist/app.js",
+    "type-check": "tsc",
+    "test": "mocha ./test/**/*.ts"
   },
   "author": "gkpty",
   "license": "MIT",
@@ -19,13 +16,16 @@
     "body-parser": "latest",
     "dotenv": "latest",
     "express": "^4.14.0",
+    "cors": "latest",
     "pino": "^8.15.0",
     "pino-pretty": "^10.2.0",
     "query-string": "^5.0.1",
-    "socket.io": "^4.7.2",
+    "socket.io": "latest",
     "sdk": "workspace:*",
     "database": "workspace:*",
-    "formidable": "^3.5.1"
+    "formidable": "^3.5.1",
+    "ts-node": "latest",
+    "sharp": "latest"
   },
   "devDependencies": {
     "@types/node": "^17.0.12",
@@ -36,8 +36,7 @@
     "eslint-config-custom": "workspace:*",
     "tsconfig": "workspace:*",
     "typescript": "latest",
-    "ts-node": "latest",
-    "nodemon": "latest",
-    "cors": "latest"
+    "esbuild": "latest",
+    "tsx": "latest"
   }
 }

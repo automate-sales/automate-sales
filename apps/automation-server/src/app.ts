@@ -40,6 +40,7 @@ const server = SSL_ENABLED ? https.createServer({
     cert: certificate,
 }, app) : http.createServer(app);
 const io = new Server(server, {
+    serveClient: false,
     cors: {
       origin: CLIENT_URL,
       methods: ["GET", "POST"]

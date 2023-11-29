@@ -1,19 +1,12 @@
 FROM node:20
 
-# Create app directory
 WORKDIR /app
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
-COPY package*.json ./
-
-RUN npm install
-# If you are building your code for production
-# RUN npm ci --omit=dev
-
-# Bundle app source
-COPY . .
+# Copy application files and node_modules
+COPY dist/ ./dist/
+COPY node_modules/ ./node_modules/
 
 EXPOSE 8000
-CMD [ "npm", "start" ]
+
+# Adjust the CMD to run your app appropriately
+CMD ["node", "dist/app.js"]
