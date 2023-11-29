@@ -8,7 +8,6 @@ export type CountryCodeDict = {
     }
 }
 
-
 export type PhoneNumberObj = {
     e164Format: string,
     countryCode: string,
@@ -163,4 +162,20 @@ export type WhatsappMediaResponse = {
     sha256: string;
     file_size: number;
     id: string;
+}
+
+export type MondayColumnValue = {
+    id: string;
+    text: string;
+    value: any;
+}
+
+export type MondayItem = { 
+    id: any; 
+    name: any;
+    board?: {
+        id: string;
+        name: string;
+    };
+    column_values: MondayColumnValue[]; 
 }
