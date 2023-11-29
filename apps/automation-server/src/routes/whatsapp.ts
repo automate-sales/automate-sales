@@ -3,7 +3,9 @@ import dotenv from 'dotenv';
 dotenv.config({ path: `.env.${ENV}` });
 
 import logger from '../../logger';
-import express, { Router, Request, Response } from 'express';
+import { Router, Request } from 'express';
+import { analyzeSentiment } from 'sdk/openai';
+import { getMondayDateTime, mondayCreateItem } from 'sdk/monday';
 
 import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
 import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
@@ -42,7 +44,7 @@ export default function(io: SocketIOServer){
     // creates a chat in monday.com
     router.post("/webhook", async (req, res) => {
         const body = req.body as WhatsappWebhook;
-        logger.info(body, 'whatsapp webhook requestion: ')
+        logger.info('whatsapp webhook received')
         try{
             // VALIDATE WEBHOOK
             const rawBody = (req as SpecialRequest).rawBody;
@@ -50,29 +52,29 @@ export default function(io: SocketIOServer){
             if(!validateMetaSignature(rawBody, String(signature))) return res.status(200).send('Unauthorized');
             if (!body.object || !body.entry?.[0]?.changes?.[0]?.value) return res.status(200).send('Incorrect format. This endpoint expects a whatsapp webhook event');
             
-            logger.info('BODY VALIDATED')
+            //logger.info('BODY VALIDATED')
             // PROCESS EVENTS
             for(let entry of body.entry){
                 for(let change of entry.changes){
                     const value = change.value
-                    logger.info(value, 'recieved a whatsapp event')
+                    //logger.info(value, 'recieved a whatsapp event')
                     if(value){
                         // process a message
                         if(value.messages){
                             const wa_contact = value.contacts[0]
-                            logger.info('MESSAGE RECEIVED')
+                            //logger.info('MESSAGE RECEIVED')
                             for(let message of value.messages){
-                                logger.info(`MESSAGE ID: ${message.id}`)
+                                //logger.info(`MESSAGE ID: ${message.id}`)
                                 let obj = await parseMessage(message)
                                 obj.status = 'received'
-                                logger.info(obj, 'OBJECT: ')
+                                //logger.info(obj, 'OBJECT: ')
                                 const chat = await createReceivedChat(obj, wa_contact)
                                 logger.info(chat, 'CHAT: ')
                                 if(message.type && mediaTypes.includes(message.type)){
                                     //upload to s3
-                                    logger.info(chat.media, 'media file! ')
+                                    //logger.info(chat.media, 'media file! ')
                                     const media = message[message.type] as WhatsappMediaObject
-                                    logger.info(chat.media, 'media file')
+                                    //logger.info(chat.media, 'media file')
                                     const mediaRes = await getFromWhatsappMediaAPI(media.id)
                                     const arrayBuffer = await downloadFileAsArrayBuffer(mediaRes.url)
                                     const fileName = `${generateMediaId()}.${media.mime_type.split('/')[1]}`
@@ -85,21 +87,40 @@ export default function(io: SocketIOServer){
                                         type: getTypeFromMime(media.mime_type)
                                     }
                                     await updateChat(chat.id, obj)
-                                    logger.info(res, 'chat updated with media')
+                                    //logger.info(res, 'chat updated with media')
                                 }
                                 // return socket event
                                 io.emit('new_message', chat)
+                                // POST PROCESSING
+                                logger.info(chat, 'POST PROCESSING CHAT: ')
+                                // analyze w chat gpt
+                                const gptResponse = await analyzeSentiment(chat.text || '')
+                                const analyzedChat = await updateChat(chat.id, gptResponse)
+                                logger.info(analyzedChat, 'ANALYZED CHAT: ')
+                                // write in monday.com
+                                const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
+                                    text: chat.text || '',
+                                    direction: chat.direction || '',
+                                    chat_status: chat.status || '',
+                                    chat_type: chat.type || '',
+                                    message_date: getMondayDateTime(chat.chatDate),
+                                    message_date_ms: chat.chatDate?.getTime(),
+                                    phone_number: analyzedChat.contact.phone_number || '',
+                                    sentiment: analyzedChat.sentiment || '',
+                                    language: analyzedChat.language || ''
+                                })
+                                logger.info(mondayItem, 'MONDAY ITEM: ')
                             }
                         // process a status update
                         } else if(value.statuses){
-                            logger.info('STATUS UPDATE')
+                            //logger.info('STATUS UPDATE')
                             for(let status of value.statuses){
-                                logger.info(status, 'STATUS: ')
+                                //logger.info(status, 'STATUS: ')
                                 const chat = await updateChatByWaId(status.id, { status: status.status })
                                 io.emit('status_update', chat)
                             }
                         } else {
-                            logger.info(value, 'recieved a unrecognized whatsapp event')
+                            //logger.info(value, 'recieved a unrecognized whatsapp event')
                         }
                     }
                 }
@@ -107,7 +128,7 @@ export default function(io: SocketIOServer){
             return res.status(200).send('Message recieved')
         
         } catch(err){
-            logger.error(err)
+            //logger.error(err)
             const errorMessage = err instanceof Error ? 
             err.message? err.message : JSON.stringify(err) :
             `Unknown error: ${err}`
@@ -143,19 +164,19 @@ export default function(io: SocketIOServer){
     router.post("/message", async (req, res, next) => {
         console.log('MESSAGE ENDPOINT TRIGERRED ')
         try{
-            logger.info('MESSAGE ENDPOINT TRIGERRED ')
+            //logger.info('MESSAGE ENDPOINT TRIGERRED ')
             const { fields, files } = await formPromise(req)
-            logger.info(fields, 'form fields')
+            //logger.info(fields, 'form fields')
             const contactId = fields?.contact_id? fields.contact_id[0] : null
             if(!contactId) throw new Error('No contact_id found in form data')
             let obj = generateMessage(fields, files)
             const agent = fields?.agent? fields.agent[0] : ''
             const {media, ...item} = obj
             let chat = await createSentChat(item, contactId)
-            logger.info(chat, 'CHAT ! ')
+            //logger.info(chat, 'CHAT ! ')
             if(media && media.size > 0){
                 //upload to s3
-                logger.info(media, 'media file')
+                //logger.info(media, 'media file')
                 const fileName = media.originalFilename || media.mimetype ? `${media.newFilename}.${media.mimetype?.split('/')[1]}` : media.newFilename
                 const key = `media/chats/${chat.id}/${fileName}`
                 const s3Url = await uploadFileToS3(media, key);
@@ -166,22 +187,37 @@ export default function(io: SocketIOServer){
                     type: getTypeFromMime(media.mimetype)
                 }
                 chat = await updateChat(chat.id, obj)
-                logger.info(res, 'chat updated with media')
+                //logger.info(res, 'chat updated with media')
             }
             const phoneNumber = chat.contact.whatsapp_id
             const whatsappMessage = await sendMessage(phoneNumber, chat.text, media)
-            logger.info(whatsappMessage, 'whatsapp message')
+            //logger.info(whatsappMessage, 'whatsapp message')
             chat = await updateChat(chat.id, { whatsapp_id: whatsappMessage.messages[0].id, status: 'pending' })
+            
             io.emit('new_message', chat)
+            
             // set responded chats
             await setRespondedChats(
                 agent,
                 chat.contact_id,
                 chat.id,
             )
+
+            // create in monday.com
+            const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
+                text: chat.text || '',
+                direction: chat.direction || '',
+                chat_status: chat.status || '',
+                chat_type: chat.type || '',
+                message_date: getMondayDateTime(chat.chatDate),
+                message_date_ms: chat.chatDate?.getTime(),
+                phone_number: chat.contact.phone_number || ''
+            })
+            logger.info(mondayItem, 'MONDAY ITEM: ')
+
             return res.status(200).send('Message sent')
         } catch(err){
-            logger.error(err)
+            //logger.error(err)
             const errorMessage = err instanceof Error ? 
             err.message? err.message : JSON.stringify(err) :
             `Unknown error: ${err}`
