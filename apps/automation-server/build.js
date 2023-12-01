@@ -10,8 +10,8 @@ esbuild.build({
     'express', 
     'cors', 
     'fluent-ffmpeg', 
-    'sharp', 
     '@ffmpeg-installer/ffmpeg', 
+    'sharp', 
     'socket.io',
     'pino',
     'pino-pretty'

@@ -22,8 +22,7 @@ DOCKER_TAG=$(node -p "require('./package.json').version")
 CONTAINER_NAME=$PROJECT_NAME
 
 # Build the Docker image
-cd apps/automation-server
-docker build -t $DOCKER_REPO:$DOCKER_TAG .
+docker build -t $DOCKER_REPO:$DOCKER_TAG -f apps/automation-server/Dockerfile .
 
 # Optionally tag as latest
 docker tag $DOCKER_REPO:$DOCKER_TAG $DOCKER_REPO:latest
