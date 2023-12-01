@@ -54,7 +54,10 @@ export const createReceivedChat = async(chat: ChatItem, contact: WhatsappContact
         if (newChat.contact_id) {
             await prisma.contact.update({
                 where: { id: newChat.contact_id },
-                data: { last_chat_date: chat.chatDate },
+                data: { 
+                    last_chat_date: chat.chatDate,
+                    last_chat_text: chat.text 
+                },
             });
         }
         return newChat;
