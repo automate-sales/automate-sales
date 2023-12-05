@@ -12,6 +12,7 @@ import { CameraButton } from './camera-button';
 import { StickerButton } from './sticker-button';
 import { Template } from 'database';
 import { TemplateInput } from './template-input';
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
 let socket = null as Socket | null;
@@ -50,9 +51,16 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
 
     const [typingUser, setTypingUser] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
 
     const handleLocationClick = (): void => { console.log('Location clicked'); };
-    const handleEmojiClick = (): void => { console.log('Emoji clicked'); };
+    
+    const handleEmojiClick = (emojiObject: EmojiClickData): void => { 
+        console.log('Emoji clicked');
+        setMessage(message + emojiObject.emoji);
+    };
+    
+    
     const userName = user.name ? user.name : user.email.split('@')[0]
 
     useEffect(() => {
@@ -139,7 +147,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
                                 <StickerButton handleFileChange={handleFileChange} />
                             </div>
                         </div>
-
+                        {showEmojiPicker && <div className="fixed bottom-24 right-4 z-10"><EmojiPicker onEmojiClick={handleEmojiClick} previewConfig={{showPreview: false}} height={400} width={300}/></div>}
                         {
                             template ? <TemplateInput template={template} isLoading={isLoading}/> : 
                             <div className={`flex-grow flex items-center rounded-full px-4 py-2 transition-all duration-150 ${isLoading ? 'bg-gray-400 text-gray-300' : 'bg-gray-100'}`}>
@@ -153,7 +161,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
                                     title='text'
                                     value={message}
                                 />
-                                <FaceSmileIcon className="h-6 w-6 text-gray-600 cursor-pointer" onClick={handleEmojiClick} />
+                                <FaceSmileIcon className="h-6 w-6 text-gray-600 cursor-pointer" onClick={()=>setShowEmojiPicker(!showEmojiPicker)} />
                             </div>
 
                         }
