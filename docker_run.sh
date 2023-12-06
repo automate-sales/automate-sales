@@ -26,6 +26,8 @@ else
   fi
 
   docker run -d --name $CONTAINER_NAME -p $CONTAINER_PORT:$CONTAINER_PORT \
+    --network=automate-biz_postgres \
+    -e DATABASE_URL=postgresql://postgres:postgres@postgres:5432/automation \
     -e CLIENT_URL=$CLIENT_URL \
     -e MEDIA_BASE_URL=$MEDIA_BASE_URL \
     -e META_APP_SECRET=$META_APP_SECRET \

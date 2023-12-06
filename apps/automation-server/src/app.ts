@@ -13,7 +13,7 @@ import whatsappRoutes from './routes/whatsapp';
 import cors from 'cors';
 import { setSeenByChats } from './utils/prisma';
 
-const PORT = process.env.PORT || 8000;
+const PORT = Number(process.env.PORT) || 8000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 const SSL_ENABLED = process.env.SSL_ENABLED ? true : false;
 
@@ -47,6 +47,10 @@ const io = new Server(server, {
     }
 });
 
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+});
+
 app.use('/whatsapp', whatsappRoutes(io) );
 
 io.on('connection', (socket) => {
@@ -69,7 +73,7 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(process.env.PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`${SSL_ENABLED ? 'HTTPS' : 'HTTP'} Server running on port ${PORT}`);
 });
 
