@@ -1,0 +1,30 @@
+name: Deploy Express API Server
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'apps/automation-server/**'
+      - 'packages/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: yarn install # or npm install
+      - name: Build Docker Image
+        run: docker build -t api-server:latest ./apps/api-server
+      - name: Push to Docker Registry
+        run: |
+          docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          docker tag api-server:latest username/api-server:latest
+          docker push username/api-server:latest
+      - name: Deploy to EC2
+        run: |
+          ssh -i /path/to/key.pem ec2-user@your-ec2-instance 'docker pull username/api-server:latest && docker run -d --restart unless-stopped username/api-server:latest'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

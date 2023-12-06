@@ -8,16 +8,12 @@ import {
 } from "@heroicons/react/24/outline";
 import type { Chat } from "database";
 
-const mediaUrl = (mediaKey: string | null): string => {
-  return mediaKey ? `${process.env.NEXT_PUBLIC_MINIO_ENDPOINT}/${process.env.NEXT_PUBLIC_PROJECT_NAME}-media/${mediaKey}` : '';
-}
-
 export function AudioMessage({ message }: { message: Chat }): JSX.Element {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null) as MutableRefObject<HTMLAudioElement|null>;
   const handleToggleAudio = (): void => {
       if (!audioRef.current) {
-          audioRef.current = new Audio(mediaUrl(message.media));
+          audioRef.current = new Audio(message.media);
           audioRef.current.addEventListener('ended', () => { setIsPlaying(false) });
       }
       if (isPlaying) audioRef.current.pause();

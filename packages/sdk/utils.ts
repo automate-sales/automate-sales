@@ -72,7 +72,8 @@ export const normalizeName =(name: string)=> {
     }).join(' ');
 }
 
-export const formatDate =(date: Date)=> {
+export const formatDate =(date: Date | string)=> {
+    date = new Date(date);
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     const hours = date.getHours().toString().padStart(2, '0');
@@ -80,7 +81,21 @@ export const formatDate =(date: Date)=> {
     return `${month}-${day} ${hours}:${minutes}`;
 }
 
-export const getLinkProps = async(path: string)=> {
+export const isLink =(text:string)=> {
+    const potentialMatches = text.match(/https?:\/\/\S+/gi);
+    if (!potentialMatches) return false;
+    for (let match of potentialMatches) {
+        try {
+            const url = new URL(match);
+            return url;
+        } catch (e) {
+            continue;
+        }
+    }
+    return null;
+}
+
+export const getLinkProps = async(path: string | URL)=> {
     try {
         const url = new URL(path);
         const response = await fetch(path);
@@ -97,7 +112,7 @@ export const getLinkProps = async(path: string)=> {
         }
   
         return {
-            url: path,
+            url: String(path),
             title,
             description,
             image

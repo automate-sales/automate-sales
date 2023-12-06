@@ -1,7 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env"],
-  "globalEnv": ["NEXT_PUBLIC_MONDAY_URL"],
   "pipeline": {
     "db:generate": {
       "cache": false
@@ -16,12 +15,20 @@
       "cache": false
     },
     "build": {
+      "dotEnv": [".env", ".env.production"],
       "dependsOn": ["^build", "^db:generate"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "lint": {},
     "dev": {
+      "dotEnv": [".env", ".env.development"],
       "dependsOn": ["^db:generate"],
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "dotEnv": [".env", ".env.development"],
+      "dependsOn": ["^build", "^db:generate"],
       "cache": false,
       "persistent": true
     }

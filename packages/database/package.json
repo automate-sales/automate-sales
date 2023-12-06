@@ -7,7 +7,7 @@
     "types": "./index.ts",
     "scripts": {
         "db:generate": "prisma generate",
-        "db:push": "prisma db push --skip-generate",
+        "db:push": "prisma db push --accept-data-loss",
         "db:seed": "prisma db seed",
         "db:studio": "prisma studio"
     },
@@ -22,7 +22,7 @@
         "sdk": "workspace:*"
     },
     "devDependencies": {
-      "typescript": "^4.5.3",
+      "typescript": "latest",
       "prisma": "^5.5.2",
       "ts-node": "latest",
       "@types/uuid": "latest"

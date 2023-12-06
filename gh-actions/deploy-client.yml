@@ -1,0 +1,25 @@
+name: Deploy Next.js App
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'apps/nextjs-app/**'
+      - 'packages/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: yarn install # or npm install
+      - name: Build
+        run: yarn build # Adjust this command based on your build process
+      - name: Vercel Deployment
+        uses: vercel/action@v1
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }} # Set this in your repository secrets
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }} # Set this in your repository secrets
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }} # Set this in your repository secrets

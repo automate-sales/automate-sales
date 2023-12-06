@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 dotenv.config({ path: `.env.${NODE_ENV}`});
+import { createReadStream } from 'fs'
 
 import { 
     S3Client, 
@@ -12,15 +13,18 @@ import {
     PutObjectCommand 
 } from "@aws-sdk/client-s3";
 import sharp from 'sharp';
+import { File, Formidable } from 'formidable';
 
 console.log('NODE NEV', NODE_ENV)
 
+const MEDIA_BASE_URL = process.env.MEDIA_BASE_URL || 'http://localhost:9000'
+const PROJECT_NAME = process.env.PROJECT_NAME || 'automation'
 const s3ClientConfig = NODE_ENV !== 'production' ? {
     credentials: {
         accessKeyId: 'minio',
         secretAccessKey: 'password',
     },
-    endpoint: process.env.MINIO_ENDPOINT,
+    endpoint: MEDIA_BASE_URL,
     forcePathStyle: true,
     signatureVersion: 'v4'
 } : {};
@@ -75,13 +79,32 @@ export const uploadImageToS3 = async (
     imageBuffer: Buffer,
     mime_type?: string
 ) => {
-    return await s3Client.send(new PutObjectCommand({
+    const res = await s3Client.send(new PutObjectCommand({
         Bucket: bucketName,
         Key: key,
         Body: imageBuffer,
         ContentDisposition: "inline",
         ...(mime_type && { ContentType: mime_type })
     }));
+    console.log(`Uploaded image to S3: ${key}`, res); 
+}
+
+export async function uploadFileToS3(file: File | ArrayBuffer, key: string ): Promise<string> {
+    const fileStream = file instanceof ArrayBuffer ? new Uint8Array(file) : createReadStream(file.filepath);
+
+    const uploadParams = {
+        Bucket: `${PROJECT_NAME}-media`,
+        Key: key,
+        Body: fileStream,
+    };
+
+    try {
+        await s3Client.send(new PutObjectCommand(uploadParams));
+        return `${MEDIA_BASE_URL}/${uploadParams.Bucket}/${uploadParams.Key}`;
+    } catch (err) {
+        console.error("Error", err);
+        throw err;
+    }
 }
 
 export const downloadImage = async (imageUrl: string) => {
@@ -111,4 +134,45 @@ export const uploadImageFromURL = async (
     } catch (error) {
         console.error(`Error migrating image, ${imageUrl}, to S3: ${error}`);
     }
+}
+
+export const getTypeFromMime =(mimeType?: string | null) : string=> {
+    const audioTypes = [
+        'audio/aac', 
+        'audio/mp4', 
+        'audio/mpeg', 
+        'audio/amr', 
+        'audio/ogg',
+        'audio/webm',
+    ];
+    const imageTypes = [
+        'image/png', 
+        'image/jpeg', 
+        'image/jpg', 
+        'image/tiff'
+    ];
+    const videoTypes = [
+        'video/mp4',
+        'video/3gp'
+    ]
+    const documentTypes = [
+        'application/pdf',
+        'application/json',
+        'text/plain',
+        'text/csv',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ];
+    if (mimeType) {
+        if (audioTypes.includes(mimeType) || mimeType.startsWith('audio')) return 'audio';
+        else if (imageTypes.includes(mimeType)) return 'image';
+        else if(videoTypes.includes(mimeType)) return 'video';
+        else if (mimeType === 'image/webp') return 'sticker';
+        else if (documentTypes.includes(mimeType)) return 'document';
+    }
+    return 'text';
 }

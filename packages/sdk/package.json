@@ -6,11 +6,18 @@
     "dependencies": {
         "dotenv": "latest",
         "@aws-sdk/client-s3": "^3.428.0",
-        "sharp": "^0.32.6",
-        "node-html-parser" : "^6.1.11"
+        "sharp": "latest",
+        "node-html-parser" : "^6.1.11",
+        "formidable": "^3.5.1",
+        "form-data": "latest",
+        "axios": "latest",
+        "fluent-ffmpeg": "latest",
+        "@ffmpeg-installer/ffmpeg" : "latest"
     },
     "devDependencies": {
-      "typescript": "^4.5.3"
+      "typescript": "latest",
+      "@types/formidable": "latest",
+      "@types/fluent-ffmpeg": "latest"
     }
 }
   

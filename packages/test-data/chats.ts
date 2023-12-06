@@ -1,15 +1,16 @@
 export default [
     {
-        "chat_type": "audio",
+        "type": "audio",
         "direction": "incoming",
         "whatsapp_id": "B6611423B529AF4607AA0E0E24782B33",
         "phone_number": "50767474627",
         "message_date": 718300102,
         "media": `${__dirname}/media/chat/audio.opus`,
-        "mime_type": "audio/ogg"
+        "mime_type": "audio/ogg",
+        "text": "audio/ogg"
     },
     {
-        "chat_type": "document",
+        "type": "document",
         "direction": "incoming",
         "whatsapp_id": "3EB09115044BA110D44013",
         "phone_number": "50767474627",
@@ -19,43 +20,47 @@ export default [
         "text": "100623OC1_Gabriel Kay.pdf"
     },
     {
-        "chat_type": "image",
+        "type": "image",
         "direction": "incoming",
         "whatsapp_id": "3AF00DE728CFAF4243ED",
         "phone_number": "50767474627",
         "message_date": 718310278,
         "media": `${__dirname}/media/chat/image.jpg`,
-        "mime_type": "image/jpeg"
+        "mime_type": "image/jpeg",
+        "text": "image/jpeg"
     },
     {
-        "chat_type": "video",
+        "type": "video",
         "direction": "incoming",
         "whatsapp_id": "3AC9FB73FB80196C7545",
         "phone_number": "50767474627",
         "message_date": 545349586,
         "media": `${__dirname}/media/chat/video.mp4`,
-        "mime_type": "video/mp4"
+        "mime_type": "video/mp4",
+        "text": "video/mp4"
     },
     {
-        "chat_type": "sticker",
+        "type": "sticker",
         "direction": "incoming",
         "whatsapp_id": "3A6F171193D68BC7C396",
         "phone_number": "50767474627",
         "message_date": 557863465,
         "media": `${__dirname}/media/chat/sticker.mp4`,
-        "mime_type": "video/mp4"
+        "mime_type": "video/mp4",
+        "text": "video/mp4"
     },
     {
-        "chat_type": "sticker",
+        "type": "sticker",
         "direction": "incoming",
         "whatsapp_id": "3AD1DC95CBAF6AD51811",
         "phone_number": "50767474627",
         "message_date": 565936875,
         "media": `${__dirname}/media/chat/sticker.webp`,
-        "mime_type": "image/webp"
+        "mime_type": "image/webp",
+        "text": "image/webp"
     },
     {
-        "chat_type": "document",
+        "type": "document",
         "direction": "outgoing",
         "whatsapp_id": "3EB0783983DD70659B0A",
         "phone_number": "50767474627",
@@ -65,7 +70,7 @@ export default [
         "text": "new_user_credentials (1).csv"
     },
     {
-        "chat_type": "location",
+        "type": "location",
         "direction": "incoming",
         "whatsapp_id": "3A4C47850F886ACBC7C9",
         "phone_number": "50767474627",
@@ -74,10 +79,11 @@ export default [
             "lat": 8.994515419006348,
             "lng": -79.51808166503906,
             "address": "Durex\nPanama City, Panamá"
-        }
+        },
+        "text": "Durex\nPanama City, Panamá"
     },
     {
-        "chat_type": "link",
+        "type": "link",
         "direction": "incoming",
         "whatsapp_id": "3AE94336A02CC567998C",
         "phone_number": "50767474627",
@@ -89,7 +95,7 @@ export default [
         "text": "https://youtu.be/M-5oWj1ubhk"
     },
     {
-        "chat_type": "text",
+        "type": "text",
         "direction": "outgoing",
         "whatsapp_id": "3A8FC24FC2AE37998C64",
         "phone_number": "50767474627",
@@ -97,7 +103,7 @@ export default [
         "text": "Como estas?"
     },
     {
-        "chat_type": "text",
+        "type": "text",
         "direction": "outgoing",
         "whatsapp_id": "3A8FC24FC2AE37998C64",
         "phone_number": "50767230238",
@@ -105,7 +111,7 @@ export default [
         "text": "Que tal?"
     },
     {
-        "chat_type": "contact",
+        "type": "contact",
         "direction": "outgoing",
         "whatsapp_id": "3AF485208967B97B4F47",
         "phone_number": "50767474627",
@@ -113,6 +119,7 @@ export default [
         "contact_object": {
             "name": "Rodolfito",
             "phone_number": "50767477221"
-        }
+        },
+        "text": "Rodolfito"
     }
 ]
