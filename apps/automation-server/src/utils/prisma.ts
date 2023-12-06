@@ -1,0 +1,155 @@
+import { Chat, Prisma, PrismaClient } from "database"
+import type { ChatItem, ChatObject, WhatsappContact } from "sdk/types"
+import { normalizePhoneNumber } from "sdk/utils"
+const prisma = new PrismaClient()
+
+
+const contactObject = (contact: WhatsappContact)=> {
+    const name = contact.profile.name || contact.wa_id
+    const whatsapp_id = contact.wa_id
+    const PhoneNumberObj = normalizePhoneNumber(whatsapp_id)
+    const phone_number = PhoneNumberObj?.e164Format || whatsapp_id
+    const country = PhoneNumberObj?.countryName || null
+    return {
+        whatsapp_id,
+        name,
+        phone_number,
+        country
+    }
+}
+
+export const getOrCreateContact = async(contact: WhatsappContact, chatDate: Date)=> {
+    const whatsapp_id = contact.wa_id
+    const res = await prisma.contact.upsert({
+        where: { whatsapp_id },
+        update: { last_chat_date: chatDate },
+        create: {
+            ...contactObject(contact),
+            last_chat_date: chatDate,
+        }
+    })
+    return res
+}
+
+export const createReceivedChat = async(chat: ChatItem, contact: WhatsappContact)=> {
+    const whatsapp_id = contact.wa_id
+    const result = await prisma.$transaction(async (prisma) => {
+        // Create or connect the contact and create the chat
+        const newChat = await prisma.chat.create({
+            data: {
+                ...chat,
+                contact: {
+                    connectOrCreate: {
+                        where: { whatsapp_id },
+                        create: {
+                            ...contactObject(contact),
+                            last_chat_date: chat.chatDate,
+                        }
+                    },
+                },
+            },
+        });
+
+        // If the contact already exists, update the last_chat_date
+        if (newChat.contact_id) {
+            await prisma.contact.update({
+                where: { id: newChat.contact_id },
+                data: { 
+                    last_chat_date: chat.chatDate,
+                    last_chat_text: chat.text 
+                },
+            });
+        }
+        return newChat;
+    });
+    return result;
+}
+
+export const createSentChat = async(chat: ChatItem, contactId: string)=> {
+    const result = await prisma.$transaction(async (prisma) => {
+        // Create or connect the contact and create the chat
+        const newChat = await prisma.chat.create({
+            data: {
+                ...chat,
+                contact: {connect: { id: contactId } },
+            },
+            include: { contact: true },
+        });
+        // update the contacts last_chat_date
+        await prisma.contact.update({
+            where: { id: newChat.contact_id },
+            data: { last_chat_date: chat.chatDate }
+        });
+        return newChat;
+    });
+    return result;
+}
+
+export const updateChat = async(chatId: number, fields: { [key: string]: any })=> {
+    return await prisma.chat.update({
+        where: { id: chatId },
+        data: fields as Prisma.ChatUpdateInput,
+        include: { contact: true },
+    })
+}
+
+export const updateChatByWaId = async(waId: string, fields: { [key: string]: any })=> {
+    return await prisma.chat.update({
+        where: { whatsapp_id: waId },
+        data: fields as Prisma.ChatUpdateInput,
+        include: { contact: true },
+    })
+}
+
+export const setRespondedChats = async (
+    agent: string, 
+    contact_id: string, 
+    chat_id: number
+) => {
+    // Fetch all unresponded chats up to a certain chat_id
+    const chats = await prisma.chat.findMany({
+        where: {
+            direction: 'incoming',
+            responded: false,
+            contact_id: contact_id,
+            id: { lte: chat_id }
+        }
+    });
+
+    // Update all fetched chats in parallel
+    const updatePromises = chats.map(chat => {
+        return prisma.chat.update({
+            where: { id: chat.id },
+            data: { 
+                responded: true, 
+                respondedAt: new Date(),
+                responded_by: agent
+            }
+        });
+    });
+    return Promise.all(updatePromises);
+}
+
+export const setSeenByChats = async (agent: string, contact_id: string) => {
+    const latestChats = await prisma.chat.findMany({
+        where: {
+            direction: 'incoming',
+            responded: false,
+            contact_id: contact_id,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10
+    });
+    const updatePromises = latestChats.map(item => {
+        return prisma.chat.update({
+            where: { id: item.id },
+            data: { 
+                seen_by: {
+                    [agent]: new Date(),
+                    ...(typeof item.seen_by === 'object' && item.seen_by !== null ? item.seen_by : {})
+                }
+            }
+        });
+    });
+    return Promise.all(updatePromises);
+}

@@ -22,7 +22,7 @@ function ExternalLink({
 
 const boardId = 5244733915
 
-export async function ContactInfo({contactId}: {contactId: string}): JSX.Element{
+export async function ContactInfo({contactId}: {contactId: string}): Promise<JSX.Element>{
   const prisma = new PrismaClient()  
   const contact = await prisma.contact.findUnique({
     where: {

@@ -1,19 +1,11 @@
-import { PrismaClient } from "database";
-import MessageBox from "./message-box";
+import { ChatHistoryContent } from "./chat-history-content";
+import { getChatHistory } from "../_actions";
+import { getCurrentUser } from "../utils";
 
-export async function ChatHistory({ id } : {id: string}): JSX.Element {
-    const prisma = new PrismaClient();
-    const chats = await prisma.chat.findMany({
-        where: {
-            contact_id: id,
-        },
-        orderBy: {
-            createdAt: 'asc',
-        },
-    });
+export async function ChatHistory({ id } : {id: string}): Promise<JSX.Element> {
+    const chats = await getChatHistory(id)
+    const user = await getCurrentUser();
     return (
-        <div className="p-3">
-            { chats.map((chat, idx) => <MessageBox index={idx} key={chat.id} message={chat} />)}
-        </div>
+        <ChatHistoryContent chats={chats.reverse()} contactId={id} agent={user.email}/>
     );
 }

@@ -16,16 +16,13 @@ import { formatDate } from "sdk/utils";
 import Image from "next/image";
 import { AudioMessage } from "./audio-message";
 
-const mediaUrl = (mediaKey: string | null): string => {
-  return mediaKey ? `${process.env.NEXT_PUBLIC_MINIO_ENDPOINT}/${process.env.NEXT_PUBLIC_PROJECT_NAME}-media/${mediaKey}` : '';
-}
 
 function IconMessage({ message, icon }: { message: Chat, icon: JSX.Element }): JSX.Element{
   return (
     <div className="flex items-center justify-center">
       <Link 
         className="flex flex-col items-center" 
-        href={mediaUrl(message.media)} 
+        href={message.media} 
         target="_blank" 
       >
           <span className="pb-1">{message.name}</span>
@@ -38,8 +35,8 @@ function IconMessage({ message, icon }: { message: Chat, icon: JSX.Element }): J
 function ImageMessage({ message }: { message: Chat  }): JSX.Element{
   return message.media ? (
     <div className="flex items-center justify-center">
-      <Link href={mediaUrl(message.media)} target="_blank">
-          <Image alt={message.name || ''} className="w-32 h-auto" height={200} src={mediaUrl(message.media)} width={200} />
+      <Link href={message.media} target="_blank">
+          <Image alt={message.name || ''} className="w-32 h-auto" height={200} src={message.media || ''} width={200} />
       </Link>
     </div>
   ) : (
@@ -51,7 +48,7 @@ function VideoMessage({ message }: { message: Chat  }): JSX.Element{
   return message.media ? (
     <div className="flex items-center justify-center">
       <video className="w-32 h-auto" controls height={120} width={96}>
-        <source src={mediaUrl(message.media)} />
+        <source src={message.media} />
         <track kind="captions" />
       </video>
     </div>
@@ -88,7 +85,7 @@ function LocationMessage({ message }: { message: Chat & {location: Location } })
   return (
     <div className="flex items-center justify-center">
       <Link className="flex flex-col items-center" href={`https://www.google.com/maps/search/?api=1&query=${query}`} target="_blank">
-          <span className="pb-1">{message.location.address || 'Location'}</span>
+          <span className="pb-1 text-blue-700 underline">{message.location.address || 'Location'}</span>
           <MapPinIcon aria-label="Location" className="h-6 w-6"/>
       </Link>
     </div>
@@ -117,8 +114,10 @@ function LinkMessage({ message }: { message: Chat & { link: LinkObject } }): JSX
 };
 
 function MessageBody({ message }: { message: Chat }): JSX.Element {
-  switch (message.chat_type) {
+  switch (message.type) {
     case 'image':
+      return <ImageMessage message={message} />;
+    case 'media':
       return <ImageMessage message={message} />;
     case 'video':
       return <VideoMessage message={message} />;
@@ -148,7 +147,7 @@ function MessageStatus({ message }: { message: Chat }): JSX.Element{
       <ExclamationCircleIcon className="text-orange-500 h-6 w-6"/>
     );
   }
-  switch (message.chat_status) {
+  switch (message.status) {
     case 'sent':
       return <CheckIcon className="text-green-500 h-6 w-6" />;
     case 'delivered':
@@ -162,9 +161,9 @@ function MessageStatus({ message }: { message: Chat }): JSX.Element{
   }
 };
 
-export default function MessageBox({ message, index }: { message: Chat; index: number }) : JSX.Element {
+export default function MessageBox({ message }: { message: Chat }) : JSX.Element {
   return (
-    <div className={`flex ${message.direction === 'outgoing' ? 'flex-row-reverse' : 'flex-row'} items-center mb-2`} key={index}>
+    <div className={`flex ${message.direction === 'outgoing' ? 'flex-row-reverse' : 'flex-row'} items-center mb-2`}>
       <div className={`${message.direction === 'outgoing' ? 'bg-green-200' : 'bg-white'} rounded-sm p-4 max-w-xs `}>
         <div className="flex items-center justify-end pb-1">
           {message.direction === 'outgoing' && (

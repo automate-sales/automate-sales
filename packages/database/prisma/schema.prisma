@@ -4,6 +4,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch"]
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
 }
 
 datasource db {
@@ -36,13 +37,14 @@ enum ContactSource {
 
 model Contact {
   id              String         @id @default(cuid())
-  whatsapp_id     String?
-  monday_id       String?
+  whatsapp_id     String? @unique
+  monday_id       String? @unique
   name            String?
   whatsapp_name   String?
   contact_status  ContactStatus? @default(lead)
   contact_source  ContactSource? @default(whatsapp)
   phone_number    String?
+  country        String?
   email           String?
   profile_picture String?
   address         Json?
@@ -94,14 +96,14 @@ enum Sentiment {
 
 model Chat {
   id            Int         @id @default(autoincrement())
-  whatsapp_id   String?
-  monday_id     String?
+  whatsapp_id   String? @unique
+  monday_id     String? @unique
   contact_id    String
   contact       Contact     @relation(fields: [contact_id], references: [id])
   name          String?
-  chat_status   ChatStatus?
+  status   ChatStatus @default(new)
   direction     Direction?
-  chat_type     ChatType?
+  type     ChatType?
   text          String?
   media         String?
   location      Json?
@@ -114,7 +116,10 @@ model Chat {
   sentiment     Sentiment?
   insights      String[]    @default([])
   responded     Boolean     @default(false)
+  responded_by  String?
+  seen_by       Json?  
   response_time Int?
+  respondedAt  DateTime?
   chatDate      DateTime
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -147,4 +152,50 @@ model Template {
   createdBy       String?
   updatedBy       String?
   chats           Chat[]
+}
+
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }

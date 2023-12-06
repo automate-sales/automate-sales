@@ -5,7 +5,7 @@ dotenv.config({ path: `.env.${NODE_ENV}`});
 import { existsSync, readFileSync } from 'fs';
 import { createPublicBucket, uploadImageToS3, wipeS3Bucket } from "sdk/s3";
 import {contacts, chats} from "test-data";
-import { Chat, ChatType, Direction, PrismaClient } from '@prisma/client'
+import { Chat, ChatStatus, ChatType, Direction, PrismaClient } from '@prisma/client'
 import { v4 } from 'uuid';
 import path from 'path'
 import { getLinkProps, normalizeName, normalizePhoneNumber } from 'sdk/utils';
@@ -13,6 +13,8 @@ import { cocoaToDate } from 'sdk/whatsapp';
 const prisma = new PrismaClient()
 
 const bucketName = `${process.env.PROJECT_NAME}-media`
+const MEDIA_BASE_URL = process.env.MEDIA_BASE_URL || 'http://localhost:9000'
+const PROJECT_NAME = process.env.PROJECT_NAME || 'automation'
 
 async function wipeDatabase() {
   console.log('Wiping Data')
@@ -27,6 +29,7 @@ async function seedContacts() {
     let newContact = {
       ...contact,
       id: contactId,
+      whatsapp_id: contact.phone_number,
       name: contact.name ? normalizeName(contact.name) : contact.phone_number,
       phone_number: phoneNumberObj?.e164Format,
       whatsapp_name: contact.name,
@@ -48,9 +51,8 @@ async function seedContacts() {
 }
 
 async function seedChats() {
-  let idx = 0
+  let idx = 1
   for(let chat of chats){
-    idx += 1
     const chatId = idx
     const phoneNumberObj = normalizePhoneNumber(chat.phone_number)
 
@@ -72,13 +74,13 @@ async function seedChats() {
       } = chat
       let newChat = {
         ...validProps,
-        id: chatId,
-        name: `new ${chat.chat_type}`,
+        name: `new ${chat.type}`,
         contact_id: contact.id,
         phone_number: phoneNumberObj?.e164Format,
         chatDate: cocoaToDate(message_date),
         direction: chat.direction as Direction,
-        chat_type: chat.chat_type as ChatType
+        status: chat.direction == 'incoming' ? 'received' : 'delivered' as ChatStatus,
+        type: chat.type as ChatType
       }
       if(chat.link) newChat.link = await getLinkProps(chat.link.url)
       // upload media to s3
@@ -87,13 +89,14 @@ async function seedChats() {
         // upload file to s3
         const fileName = path.basename(chat.media)
         const key = `media/chats/${chatId}/${fileName}`
-        newChat.media = key
+        newChat.media = `${MEDIA_BASE_URL}/${PROJECT_NAME}-media/${key}`
         newChat.name = fileName
         await uploadImageToS3(bucketName, key, file, mime_type)
       }
       await prisma.chat.create({
         data: newChat
       })
+      idx+=1
     }
   }
 }

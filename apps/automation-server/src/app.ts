@@ -10,8 +10,10 @@ import { Server } from 'socket.io';
 import { readFileSync } from 'fs';
 import logger from '../logger';
 import whatsappRoutes from './routes/whatsapp';
+import cors from 'cors';
+import { setSeenByChats } from './utils/prisma';
 
-const PORT = process.env.PORT || 8000;
+const PORT = Number(process.env.PORT) || 8000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 const SSL_ENABLED = process.env.SSL_ENABLED ? true : false;
 
@@ -27,6 +29,9 @@ app.use(bodyParser.json({
         req.rawBody = buf
     }
 }))
+if(!SSL_ENABLED) app.use(cors({
+    origin: CLIENT_URL // Adjust this to the domain you want to allow
+}));
 
 const privateKey = SSL_ENABLED ? readFileSync('certs/privkey1.pem', 'utf8') : '';
 const certificate = SSL_ENABLED ? readFileSync('certs/fullchain1.pem', 'utf8'): '';
@@ -35,22 +40,40 @@ const server = SSL_ENABLED ? https.createServer({
     cert: certificate,
 }, app) : http.createServer(app);
 const io = new Server(server, {
+    serveClient: false,
     cors: {
       origin: CLIENT_URL,
       methods: ["GET", "POST"]
     }
 });
 
-app.use('/whatsapp', whatsappRoutes);
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+});
+
+app.use('/whatsapp', whatsappRoutes(io) );
 
 io.on('connection', (socket) => {
-    logger.debug('a user connected');
+    logger.info('a user connected');
+
+    socket.on('typing', (data) => {
+        console.log('USER TYPING: ', data);
+        socket.broadcast.emit('typing', data); // broadcast to all users except the one who is typing
+    });
+
+    socket.on('seen_by', (data) => {
+        console.log('USER SEEN BY: ', data);
+        setSeenByChats(data.agent, data.contact_id)
+        .then((res)=> console.log('seen by updated: ', res))
+        .catch((err)=> console.log('error updating seen by: ', err))  
+    }); 
+
     socket.on('disconnect', () => {
-      logger.debug('user disconnected');
+      logger.info('user disconnected');
     });
 });
 
-server.listen(process.env.PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`${SSL_ENABLED ? 'HTTPS' : 'HTTP'} Server running on port ${PORT}`);
 });
 
