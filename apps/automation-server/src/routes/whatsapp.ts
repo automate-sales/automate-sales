@@ -4,13 +4,13 @@ dotenv.config({ path: `.env.${ENV}` });
 
 import logger from '../../logger';
 import { Router, Request } from 'express';
-import { analyzeSentiment } from 'sdk/openai';
+import { analyzeSentiment, extractDemographicData } from 'sdk/openai';
 import { getMondayDateTime, mondayCreateItem } from 'sdk/monday';
 
 import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
 import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
 import type  { ChatItem, ChatObject, WhatsappMediaObject, WhatsappWebhook } from 'sdk/types'
-import { createReceivedChat, createSentChat, setRespondedChats, updateChat, updateChatByWaId } from '../utils/prisma';
+import { createReceivedChat, createSentChat, setRespondedChats, updateChat, updateChatByWaId, updateContact } from '../utils/prisma';
 
 import { Server as SocketIOServer } from 'socket.io';
 
@@ -95,8 +95,11 @@ export default function(io: SocketIOServer){
                                 logger.info(chat, 'POST PROCESSING CHAT: ')
                                 // analyze w chat gpt
                                 const gptResponse = await analyzeSentiment(chat.text || '')
-                                const analyzedChat = await updateChat(chat.id, gptResponse)
+                                const analyzedChat = gptResponse && await updateChat(chat.id, gptResponse)
                                 logger.info(analyzedChat, 'ANALYZED CHAT: ')
+                                const extractedData = await extractDemographicData(chat.contact.last_chat_text || '', chat.text || '')
+                                logger.info(extractedData, 'EXTRACTED DATA: ')
+                                extractedData && await updateContact(chat.contact_id, extractedData)
                                 // write in monday.com
                                 const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
                                     text: chat.text || '',
@@ -105,9 +108,9 @@ export default function(io: SocketIOServer){
                                     chat_type: chat.type || '',
                                     message_date: getMondayDateTime(chat.chatDate),
                                     message_date_ms: chat.chatDate?.getTime(),
-                                    phone_number: analyzedChat.contact.phone_number || '',
-                                    sentiment: analyzedChat.sentiment || '',
-                                    language: analyzedChat.language || ''
+                                    phone_number: chat.contact.phone_number || '',
+                                    sentiment: chat.sentiment || '',
+                                    language: chat.language || ''
                                 })
                                 logger.info(mondayItem, 'MONDAY ITEM: ')
                             }
@@ -128,7 +131,7 @@ export default function(io: SocketIOServer){
             return res.status(200).send('Message recieved')
         
         } catch(err){
-            //logger.error(err)
+            logger.error(err)
             const errorMessage = err instanceof Error ? 
             err.message? err.message : JSON.stringify(err) :
             `Unknown error: ${err}`
@@ -193,7 +196,7 @@ export default function(io: SocketIOServer){
             const whatsappMessage = await sendMessage(phoneNumber, chat.text, media)
             //logger.info(whatsappMessage, 'whatsapp message')
             chat = await updateChat(chat.id, { whatsapp_id: whatsappMessage.messages[0].id, status: 'pending' })
-            
+            await updateContact(chat.contact_id, { last_chat_date: chat.chatDate, last_chat_text: chat.text })
             io.emit('new_message', chat)
             
             // set responded chats

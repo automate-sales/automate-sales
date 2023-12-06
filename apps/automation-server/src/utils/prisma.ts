@@ -48,6 +48,7 @@ export const createReceivedChat = async(chat: ChatItem, contact: WhatsappContact
                     },
                 },
             },
+            include: { contact: true },
         });
 
         // If the contact already exists, update the last_chat_date
@@ -90,6 +91,12 @@ export const updateChat = async(chatId: number, fields: { [key: string]: any })=
         where: { id: chatId },
         data: fields as Prisma.ChatUpdateInput,
         include: { contact: true },
+    })
+}
+export const updateContact = async(contactId: string, fields: { [key: string]: any })=> {
+    return await prisma.contact.update({
+        where: { id: contactId },
+        data: fields as Prisma.ContactUpdateInput
     })
 }
 

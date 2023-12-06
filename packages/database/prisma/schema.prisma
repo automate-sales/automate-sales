@@ -39,15 +39,24 @@ model Contact {
   id              String         @id @default(cuid())
   whatsapp_id     String? @unique
   monday_id       String? @unique
-  name            String?
   whatsapp_name   String?
   contact_status  ContactStatus? @default(lead)
   contact_source  ContactSource? @default(whatsapp)
   phone_number    String?
-  country        String?
+
+  name            String?
   email           String?
+  nationality     String?
+  legal_id          String?
+  gender          String?
+  birthdate        DateTime?
+  company_name    String?
+  job_title  String?
+  interests       String[]
+  address         String?
+  country        String?
+
   profile_picture String?
-  address         Json?
   last_chat_date  DateTime?
   last_chat_text  String?
   agent           Json?
