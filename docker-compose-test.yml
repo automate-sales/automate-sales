@@ -1,0 +1,80 @@
+version: '3.5'
+
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: ergonomica
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+  
+  minio:
+    image: minio/minio
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: password
+    command: server /data --console-address :9001
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    ports:
+      - 4040:4040
+
+  automation-server:
+    build:
+      context: ./apps/automation-server
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ergonomica"
+      PROJECT_NAME: automation
+      CLIENT_URL: "http://chat-client:3000"
+      MEDIA_BASE_URL: "http://chat-client:9000"
+      
+    ports:
+      - "$CONTAINER_PORT:$CONTAINER_PORT"
+    depends_on:
+      - postgres
+      - minio
+    restart: unless-stopped
+
+  chat-client:
+    build:
+      context: ./apps/chat-client
+      dockerfile: Dockerfile
+    command:
+      - sh 
+      - -c
+      - |
+        npx prisma db push
+        npx prisma db seed
+        npm run build
+        npm run e2e:headless:chrome
+    ports:
+      - "3000:3000"
+    environment:
+      SKIP_ENV_VALIDATION: "true"
+      NODE_ENV: test
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ergonomica"
+      PROJECT_NAME: automation
+      NEXT_PUBLIC_MONDAY_URL: "https://torus-digital.monday.com"
+      NEXT_PUBLIC_SERVER_URL: "http://automation-server:8000"
+      NEXTAUTH_SECRET: secret12386
+    depends_on:
+      - postgres
+      - minio
+      - automation-server
