@@ -22,6 +22,16 @@ async function wipeDatabase() {
   await prisma.contact.deleteMany();
 }
 
+async function seedUsers() {
+  const users = [
+    {
+      name: "John Doe",
+      email: "johndoe@doejohn.com"
+    }
+  ];
+  for (let u of users) await prisma.user.create({data: u});
+}
+
 async function seedContacts() {
   for(let contact of contacts){
     const contactId = v4()
@@ -110,6 +120,7 @@ async function wipeData() {
 }
 
 async function seedData() {
+  await seedUsers();
   await seedContacts();
   await seedChats();
 }

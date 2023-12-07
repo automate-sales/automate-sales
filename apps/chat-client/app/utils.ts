@@ -40,7 +40,7 @@ export const authOptions = {
               const failed = result.rejected.concat(result.pending).filter(Boolean)
               if (failed.length) {
                 throw new Error(`Email(s) (${failed.join(", ")}) could not be sent`)
-              } else console.info('Sent a verification email')
+              } else console.info(`Sent a verification email from ${process.env.EMAIL_HOST}`)
           },
         })
     ],
