@@ -96,6 +96,8 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
         setMessageType('template')
     };
 
+    console.log('TEMPLATE ', message, template)
+
     const submitForm = async(e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsLoading(true);
@@ -166,7 +168,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
 
                         }
                         
-                        {message || media ? (
+                        {message || media || template? (
                             <button
                                 className="h-10 w-10 rounded-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300"
                                 disabled={isLoading}
