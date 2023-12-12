@@ -64,6 +64,7 @@ export async function extractDemographicData(previousMessage: string, currentMes
     - Current Message: "${currentMessage}"
     
     Please extract any available personal and demographic information from these chats. Look for name, email, nationality, legal ID, gender, birthdate, company name, job title, and interests. Ineterests is an array of strings that may contain products and categories of products.
+    
     your response must always be a json object in the following format:
     {
         "name": "",
@@ -78,7 +79,9 @@ export async function extractDemographicData(previousMessage: string, currentMes
         "address": "",
         "country": ""
     }
-    only include the keys of the data you were able to extract and dont include any keys with empty/blank values. If you were not able to extract any data, return an empty object. If you were able to extract data but it is not in the list above, return an empty object.`;
+    Only include the keys of the data you were able to extract and dont include any keys with empty/blank values. If you were not able to extract any data, return an empty object. If you were able to extract data but it is not in the list above, return an empty object.
+    
+    Do not include any explanatory text or comments in the response. Only provide the JSON object.`;
     try {
         const response = await fetch(OPENAI_API_URL, {
             method: 'POST',
