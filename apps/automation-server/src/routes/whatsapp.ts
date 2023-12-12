@@ -62,19 +62,16 @@ export default function(io: SocketIOServer){
                         // process a message
                         if(value.messages){
                             const wa_contact = value.contacts[0]
-                            //logger.info('MESSAGE RECEIVED')
                             for(let message of value.messages){
-                                //logger.info(`MESSAGE ID: ${message.id}`)
                                 let obj = await parseMessage(message)
                                 obj.status = 'received'
-                                //logger.info(obj, 'OBJECT: ')
+                                logger.info(obj, 'OBJECT: ')
+                                // lead = get or create lead
                                 const chat = await createReceivedChat(obj, wa_contact)
                                 logger.info(chat, 'CHAT: ')
                                 if(message.type && mediaTypes.includes(message.type)){
-                                    //upload to s3
-                                    //logger.info(chat.media, 'media file! ')
                                     const media = message[message.type] as WhatsappMediaObject
-                                    //logger.info(chat.media, 'media file')
+                                    logger.info(chat.media, 'media file')
                                     const mediaRes = await getFromWhatsappMediaAPI(media.id)
                                     const arrayBuffer = await downloadFileAsArrayBuffer(mediaRes.url)
                                     const fileName = `${generateMediaId()}.${media.mime_type.split('/')[1]}`
@@ -87,19 +84,24 @@ export default function(io: SocketIOServer){
                                         type: getTypeFromMime(media.mime_type)
                                     }
                                     await updateChat(chat.id, obj)
-                                    //logger.info(res, 'chat updated with media')
                                 }
                                 // return socket event
                                 io.emit('new_message', chat)
+
+                                
                                 // POST PROCESSING
                                 logger.info(chat, 'POST PROCESSING CHAT: ')
                                 // analyze w chat gpt
-                                const gptResponse = await analyzeSentiment(chat.text || '')
-                                const analyzedChat = gptResponse && await updateChat(chat.id, gptResponse)
-                                logger.info(analyzedChat, 'ANALYZED CHAT: ')
-                                const extractedData = await extractDemographicData(chat.contact.last_chat_text || '', chat.text || '')
-                                logger.info(extractedData, 'EXTRACTED DATA: ')
-                                extractedData && await updateContact(chat.contact_id, extractedData)
+                                if(process.env.SENTIMENT_ANALYSIS){
+                                    const gptResponse = await analyzeSentiment(chat.text || '')
+                                    const analyzedChat = gptResponse && await updateChat(chat.id, gptResponse)
+                                    logger.info(analyzedChat, 'ANALYZED CHAT: ')
+                                }
+                                if(process.env.DATA_EXTRACTION){
+                                    const extractedData = await extractDemographicData(chat.contact.last_chat_text || '', chat.text || '')
+                                    logger.info(extractedData, 'EXTRACTED DATA: ')
+                                    extractedData && await updateContact(chat.contact_id, extractedData)
+                                }
                                 // write in monday.com
                                 const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
                                     text: chat.text || '',
