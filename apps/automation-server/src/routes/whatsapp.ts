@@ -10,7 +10,7 @@ import { getMondayDateTime, mondayCreateItem } from 'sdk/monday';
 import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
 import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
 import type  { WhatsappMediaObject, WhatsappWebhook } from 'sdk/types'
-import { createReceivedChat, createSentChat, setRespondedChats, updateChat, updateChatByWaId, updateContact } from '../utils/prisma';
+import { createReceivedChat, createSentChat, setRespondedChats, updateChat, updateChatByWaId, updateChatStatus, updateContact } from '../utils/prisma';
 
 import { Server as SocketIOServer } from 'socket.io';
 
@@ -73,12 +73,12 @@ export default function(io: SocketIOServer){
                                 // PERHAPS MAKE THIS OPTIONAL, like try catch and log the error failed to upload media.
                                 if(message.type && mediaTypes.includes(message.type)){
                                     const media = message[message.type] as WhatsappMediaObject
-                                    logger.info(chat.media, 'media file')
+                                    //logger.info(chat.media, 'media file')
                                     // must have test version
                                     const mediaRes = await getFromWhatsappMediaAPI(media.id)
-                                    logger.info(mediaRes, 'media response \n MEDIA RESPONSE')
+                                    //logger.info(mediaRes, 'media response \n MEDIA RESPONSE')
                                     const arrayBuffer = await downloadFileAsArrayBuffer(mediaRes.url)
-                                    logger.info('array buffer \n ARRAY BUFFER')
+                                    //logger.info('array buffer \n ARRAY BUFFER')
                                     const fileName = message.document?.filename || `${generateMediaId()}.${media.mime_type.split('/')[1]}`
                                     const key = `media/chats/${chat.id}/${fileName}`
                                     const s3Url = await uploadFileToS3(arrayBuffer, key);
@@ -101,11 +101,11 @@ export default function(io: SocketIOServer){
                                 if(chat.type == 'text' && process.env.SENTIMENT_ANALYSIS){
                                     const gptResponse = await analyzeSentiment(chat.text || '')
                                     const analyzedChat = gptResponse && await updateChat(chat.id, gptResponse)
-                                    logger.info(analyzedChat, 'ANALYZED CHAT: ')
+                                    //logger.info(analyzedChat, 'ANALYZED CHAT: ')
                                 }
                                 if(chat.type == 'text' && process.env.DATA_EXTRACTION){
                                     const extractedData = await extractDemographicData(chat.contact.last_chat_text || '', chat.text || '')
-                                    logger.info(extractedData, 'EXTRACTED DATA: ')
+                                    //logger.info(extractedData, 'EXTRACTED DATA: ')
                                     extractedData && await updateContact(chat.contact_id, extractedData)
                                 }
                                 if(process.env.CRM_INTEGRATION){
@@ -120,7 +120,7 @@ export default function(io: SocketIOServer){
                                         sentiment: chat.sentiment || '',
                                         language: chat.language || ''
                                     })
-                                    logger.info(mondayItem, 'MONDAY ITEM: ')
+                                    //logger.info(mondayItem, 'MONDAY ITEM: ')
                                 }
                             }
 
@@ -130,7 +130,7 @@ export default function(io: SocketIOServer){
                             //logger.info('STATUS UPDATE')
                             for(let status of value.statuses){
                                 //logger.info(status, 'STATUS: ')
-                                const chat = await updateChatByWaId(status.id, { status: status.status })
+                                const chat = await updateChatStatus(status.id, status.status)
                                 // update in CRM
                                 io.emit('status_update', chat)
                             }
@@ -189,10 +189,10 @@ export default function(io: SocketIOServer){
             const contactId = fields?.contact_id? fields.contact_id[0] : null
             if(!contactId) throw new Error('No contact_id found in form data')
             let obj = generateMessage(fields, files)
-            logger.info(obj, 'MESSAGE OBJECT')
+            //logger.info(obj, 'MESSAGE OBJECT')
             const agent = fields?.agent? fields.agent[0] : ''
             const {media, template, ...item} = obj
-            logger.info(item, 'CREATING CHAT ')
+            //logger.info(item, 'CREATING CHAT ')
             let chat = await createSentChat(item, contactId)
             //logger.info(chat, 'CHAT ! ')
             if(media && media.size > 0){
@@ -211,9 +211,9 @@ export default function(io: SocketIOServer){
                 //logger.info(res, 'chat updated with media')
             }
             const phoneNumber = chat.contact.whatsapp_id
-            logger.info(template, 'template objECT')
+            //logger.info(template, 'template objECT')
             const whatsappMessage = await sendMessage(phoneNumber, chat.text, media, template)
-            logger.info(whatsappMessage, 'whatsapp message!!!')
+            //logger.info(whatsappMessage, 'whatsapp message!!!')
             chat = await updateChat(chat.id, { whatsapp_id: whatsappMessage.messages[0].id, status: 'pending' })
             await updateContact(chat.contact_id, { last_chat_date: chat.chatDate, last_chat_text: chat.text })
             io.emit('new_message', chat)
@@ -235,7 +235,7 @@ export default function(io: SocketIOServer){
                 message_date_ms: chat.chatDate?.getTime(),
                 phone_number: chat.contact.phone_number || ''
             })
-            logger.info(mondayItem, 'MONDAY ITEM: ')
+            //logger.info(mondayItem, 'MONDAY ITEM: ')
 
             return res.status(200).send('Message sent')
         } catch(err){

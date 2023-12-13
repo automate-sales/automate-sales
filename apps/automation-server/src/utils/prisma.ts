@@ -108,6 +108,20 @@ export const updateChatByWaId = async(waId: string, fields: { [key: string]: any
     })
 }
 
+export const updateChatStatus = async(waId: string, status: string)=> {
+    const currentChat = await prisma.chat.findUnique({
+        where: { whatsapp_id: waId },
+        include: { contact: true }
+    });
+    console.log('CURRENT CHAT!!!: ', currentChat?.status)
+    console.log('NEW STATUS!!!: ', status)
+    if (currentChat && currentChat.status === 'delivered' && status === 'sent') {
+        console.log(`Skipping update for ${waId} as the status is already 'delivered'`);
+        return currentChat;
+    }
+    return await updateChatByWaId(waId, { status: status });
+}
+
 export const setRespondedChats = async (
     agent: string, 
     contact_id: string, 
