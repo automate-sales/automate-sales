@@ -88,6 +88,7 @@ enum ChatType {
   image
   video
   contact
+  contacts
   location
   link
   document

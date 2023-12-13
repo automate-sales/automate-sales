@@ -35,9 +35,11 @@ function IconMessage({ message, icon }: { message: Chat, icon: JSX.Element }): J
 function ImageMessage({ message }: { message: Chat  }): JSX.Element{
   return message.media ? (
     <div className="flex items-center justify-center">
-      <Link href={message.media} target="_blank">
-          <Image alt={message.name || ''} className="w-32 h-auto" height={200} src={message.media || ''} width={200} />
-      </Link>
+      {
+        message.media && message.media.startsWith('http') ? <Link href={message.media} target="_blank">
+            <Image alt={message.name || ''} className="w-32 h-auto" height={200} src={message.media || ''} width={200} />
+        </Link> : <span className="pb-1">{message.name}</span>
+      }
     </div>
   ) : (
     <IconMessage icon={<CameraIcon aria-label="Camera" className="h-6 w-6"/>} message={message} />
@@ -59,7 +61,7 @@ function VideoMessage({ message }: { message: Chat  }): JSX.Element{
 
 interface ContactObject {
   name: string,
-  phone_number: string
+  phone: string
 }
 
 function ContactMessage({ message }: { message: Chat & {contact_object: ContactObject} }): JSX.Element{
@@ -68,7 +70,7 @@ function ContactMessage({ message }: { message: Chat & {contact_object: ContactO
       <UserCircleIcon aria-label="Contact" className="h-8 w-8 mr-2" />
       <div className="text-sm">
         <div>{message.contact_object.name}</div>
-        <Link className="text-blue-700 underline" href={`tel:+${message.contact_object.phone_number}`}>+{message.contact_object.phone_number}</Link>
+        <Link className="text-blue-700 underline" href={`tel:${message.contact_object.phone}`}>{message.contact_object.phone}</Link>
       </div>
     </div>
   );
@@ -123,7 +125,7 @@ function MessageBody({ message }: { message: Chat }): JSX.Element {
       return <VideoMessage message={message} />;
     case 'audio':
       return <AudioMessage message={message} />;
-    case 'contact':
+    case 'contacts':
       return <ContactMessage message={message as Chat & {contact_object: ContactObject}} />;
     case 'location':
       return <LocationMessage message={message as Chat & {location: Location}} />;

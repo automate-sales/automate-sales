@@ -9,7 +9,7 @@ import { getMondayDateTime, mondayCreateItem } from 'sdk/monday';
 
 import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
 import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
-import type  { ChatItem, ChatObject, WhatsappMediaObject, WhatsappWebhook } from 'sdk/types'
+import type  { WhatsappMediaObject, WhatsappWebhook } from 'sdk/types'
 import { createReceivedChat, createSentChat, setRespondedChats, updateChat, updateChatByWaId, updateContact } from '../utils/prisma';
 
 import { Server as SocketIOServer } from 'socket.io';
@@ -52,7 +52,7 @@ export default function(io: SocketIOServer){
             if(process.env.NODE_ENV != 'test' && !validateMetaSignature(rawBody, String(signature))) return res.status(200).send('Unauthorized');
             if (!body.object || !body.entry?.[0]?.changes?.[0]?.value) return res.status(200).send('Incorrect format. This endpoint expects a whatsapp webhook event');
             
-            //logger.info('BODY VALIDATED')
+            logger.info(body, 'BODY VALIDATED')
             // PROCESS EVENTS
             for(let entry of body.entry){
                 for(let change of entry.changes){
@@ -65,10 +65,12 @@ export default function(io: SocketIOServer){
                             for(let message of value.messages){
                                 let obj = await parseMessage(message)
                                 obj.status = 'received'
-                                logger.info(obj, 'OBJECT: ')
+                                //logger.info(obj, 'OBJECT: ')
                                 // lead = get or create lead
-                                const chat = await createReceivedChat(obj, wa_contact)
-                                logger.info(chat, 'CHAT: ')
+                                let chat = await createReceivedChat(obj, wa_contact)
+                                //logger.info(chat, 'CHAT: ')
+
+                                // PERHAPS MAKE THIS OPTIONAL, like try catch and log the error failed to upload media.
                                 if(message.type && mediaTypes.includes(message.type)){
                                     const media = message[message.type] as WhatsappMediaObject
                                     logger.info(chat.media, 'media file')
@@ -76,7 +78,8 @@ export default function(io: SocketIOServer){
                                     const mediaRes = await getFromWhatsappMediaAPI(media.id)
                                     logger.info(mediaRes, 'media response \n MEDIA RESPONSE')
                                     const arrayBuffer = await downloadFileAsArrayBuffer(mediaRes.url)
-                                    const fileName = `${generateMediaId()}.${media.mime_type.split('/')[1]}`
+                                    logger.info('array buffer \n ARRAY BUFFER')
+                                    const fileName = message.document?.filename || `${generateMediaId()}.${media.mime_type.split('/')[1]}`
                                     const key = `media/chats/${chat.id}/${fileName}`
                                     const s3Url = await uploadFileToS3(arrayBuffer, key);
                                     const obj = {
@@ -85,21 +88,22 @@ export default function(io: SocketIOServer){
                                         text: fileName,
                                         type: getTypeFromMime(media.mime_type)
                                     }
-                                    await updateChat(chat.id, obj)
+                                    chat = await updateChat(chat.id, obj)
                                 }
                                 // return socket event
+
                                 io.emit('new_message', chat)
 
 
                                 // POST PROCESSING
                                 //logger.info(chat, 'POST PROCESSING CHAT: ')
                                 // analyze w chat gpt
-                                if(process.env.SENTIMENT_ANALYSIS){
+                                if(chat.type == 'text' && process.env.SENTIMENT_ANALYSIS){
                                     const gptResponse = await analyzeSentiment(chat.text || '')
                                     const analyzedChat = gptResponse && await updateChat(chat.id, gptResponse)
                                     logger.info(analyzedChat, 'ANALYZED CHAT: ')
                                 }
-                                if(process.env.DATA_EXTRACTION){
+                                if(chat.type == 'text' && process.env.DATA_EXTRACTION){
                                     const extractedData = await extractDemographicData(chat.contact.last_chat_text || '', chat.text || '')
                                     logger.info(extractedData, 'EXTRACTED DATA: ')
                                     extractedData && await updateContact(chat.contact_id, extractedData)
@@ -209,7 +213,7 @@ export default function(io: SocketIOServer){
             const phoneNumber = chat.contact.whatsapp_id
             logger.info(template, 'template objECT')
             const whatsappMessage = await sendMessage(phoneNumber, chat.text, media, template)
-            //logger.info(whatsappMessage, 'whatsapp message')
+            logger.info(whatsappMessage, 'whatsapp message!!!')
             chat = await updateChat(chat.id, { whatsapp_id: whatsappMessage.messages[0].id, status: 'pending' })
             await updateContact(chat.contact_id, { last_chat_date: chat.chatDate, last_chat_text: chat.text })
             io.emit('new_message', chat)

@@ -1,8 +1,8 @@
 //existing user sign in from a login page
 describe('An existing user signs in from the login page', () => {
-    const email_confirmation_msg = 'Te hemos enviado un correo. Confirmalo para iniciar sesión.'
-    const sign_in_success_msg = 'Ha iniciado sesión'
-    const logout_success_msg = 'Ha cerrado su sesión'
+    //const email_confirmation_msg = 'Te hemos enviado un correo. Confirmalo para iniciar sesión.'
+    //const sign_in_success_msg = 'Ha iniciado sesión'
+    //const logout_success_msg = 'Ha cerrado su sesión'
     it('Is succesfull', () => {
       cy.clearAllCookies()
       cy.visit('localhost:3000/api/auth/signin')
