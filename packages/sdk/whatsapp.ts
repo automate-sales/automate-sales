@@ -95,7 +95,7 @@ const parseMediaChat =(message: WhatsappMessage)=> {
         const filename = 'filename' in media ? String(media.filename) : null
         return {
             media: media.id,
-            mimeType: media.mime_type,
+            //mimeType: media.mime_type,
             text: filename || caption || media.mime_type,
             name: filename || media.mime_type
         } as any
@@ -237,14 +237,14 @@ export async function sendMessage(
     } | null // template name
 ): Promise<WhatsAppMessageResponse>{
     if(!message && !media && !template || !phone) throw new Error('Must provide a message or media and a phone number')
-    console.log('WHATSAP MEDIA FILE: ', media)
-    console.log('template: ', template)
+    //console.log('WHATSAP MEDIA FILE: ', media)
+    //console.log('template: ', template)
     if(media && media.mimetype?.startsWith('audio/webm')) {
       media = await convertWebmToOgg(media)
       console.log('CONVERTED MEDIA FILE: ', media)
     } 
     const mediaId = media ? await uploadToWhatsAppMediaAPI(media) : null
-    console.log('MEDIA ID: ', mediaId)
+    //console.log('MEDIA ID: ', mediaId)
     const fileName = media?.originalFilename || media?.mimetype ? `${media?.newFilename}.${media?.mimetype?.split('/')[1]}` : media?.newFilename
     const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_ID}/messages`
     const messageType = template ? 'template' : getTypeFromMime(media?.mimetype)

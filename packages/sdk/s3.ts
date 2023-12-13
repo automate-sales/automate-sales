@@ -90,8 +90,10 @@ export const uploadImageToS3 = async (
 }
 
 export async function uploadFileToS3(file: File | ArrayBuffer, key: string ): Promise<string> {
-    const fileStream = file instanceof ArrayBuffer ? new Uint8Array(file) : createReadStream(file.filepath);
-
+    console.log('UPLOADING TO S#')
+    const fileStream = 'filepath' in file ? createReadStream(file.filepath) : Buffer.from(file as ArrayBuffer)
+    console.log('KEYYYY! ', key)
+    console.log('FILE STREAM: ', fileStream)
     const uploadParams = {
         Bucket: `${PROJECT_NAME}-media`,
         Key: key,
