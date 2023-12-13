@@ -164,6 +164,14 @@ export const parseMessage = async (message: WhatsappMessage): Promise<ChatItem> 
     } else throw new Error(`Message type not found: ${message.type}`)
 }
 
+const extractParams = (templateBody: string) => {
+    console.log('extracting params from: ', templateBody)
+    const matches = templateBody.match(/{{(.*?)}}/g);
+    const params = matches ? matches.map(match => match.slice(2, -2)) : [];
+    console.log('params: ', params)
+    return params
+}
+
 export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
     console.log('generating message')
     const messageType = fields?.type[0] ? fields.type[0] : null as string | null
@@ -173,9 +181,9 @@ export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
         direction: 'outgoing',
         chatDate: new Date()
     } as ChatObject
+    const text = fields?.text[0] ? fields.text[0] : null as string | null
     switch(messageType){
         case 'text':
-            const text = fields?.text[0] ? fields.text[0] : null as string | null
             if(!text) throw new Error('No text found in text message')
             chat.text = text
             chat.name = text.substring(0, 24)
@@ -202,6 +210,17 @@ export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
         case 'media':
             chat.media = files.file[0] as File | null
             return chat;
+        case 'template':
+            const templateName = fields.template[0] as string
+            if(!templateName) throw new Error('No template found in template message')
+            chat.text = text
+            chat.name = templateName
+            chat.template = {
+                name: templateName,
+                params: extractParams(text || ''),
+                language: 'es'
+            }
+            return chat;
         default:
             throw new Error(`Unrecognized message type: ${messageType}`)
     }
@@ -214,11 +233,12 @@ export async function sendMessage(
     template?: {
         name: string, // name of the template
         params: string[], // array of strings for the template parameters
-        language: string
+        language?: string
     } | null // template name
 ): Promise<WhatsAppMessageResponse>{
-    if(!message && !media || !phone) throw new Error('Must provide a message or media and a phone number')
+    if(!message && !media && !template || !phone) throw new Error('Must provide a message or media and a phone number')
     console.log('WHATSAP MEDIA FILE: ', media)
+    console.log('template: ', template)
     if(media && media.mimetype?.startsWith('audio/webm')) {
       media = await convertWebmToOgg(media)
       console.log('CONVERTED MEDIA FILE: ', media)
@@ -227,7 +247,7 @@ export async function sendMessage(
     console.log('MEDIA ID: ', mediaId)
     const fileName = media?.originalFilename || media?.mimetype ? `${media?.newFilename}.${media?.mimetype?.split('/')[1]}` : media?.newFilename
     const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_ID}/messages`
-    const messageType = getTypeFromMime(media?.mimetype)
+    const messageType = template ? 'template' : getTypeFromMime(media?.mimetype)
     const data = {
         messaging_product: "whatsapp",
         to: phone,
@@ -237,7 +257,7 @@ export async function sendMessage(
         ...(template? {template: {
             name: template.name,
             language: {
-                code: template.language
+                code: template.language || 'es'
             },
             ...(template.params? {
                 components: [

@@ -13,6 +13,7 @@ import { StickerButton } from './sticker-button';
 import { Template } from 'database';
 import { TemplateInput } from './template-input';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
+import { TemplateObj } from '../../types';
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
 let socket = null as Socket | null;
@@ -25,14 +26,6 @@ function Spinner(): JSX.Element {
         </svg>
     )
 }
-
-type TemplateObj = {
-    name: string;
-    variables: {
-        [key:string]: string;
-    }
-}
-
 
 export function ChatBar({contactId, user, templates}: {contactId: string, user: {
         name?: string;
@@ -107,11 +100,13 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
             data.append('agent', user.email);
             data.append('contact_id', contactId);
             data.append('type', messageType);
+            if(template) data.append('template', template.name)
             if(media) data.append('file', media); 
             else if (message) data.append('text', message);
             //else if (template) data.append('template', template);
             else throw new Error('No message or media to send')
             await sendMessage(data)
+            setTemplate(null);
             setMessage("");
             setMedia(null);
             setIsLoading(false);
@@ -151,7 +146,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
                         </div>
                         {showEmojiPicker && <div className="fixed bottom-24 right-4 z-10"><EmojiPicker onEmojiClick={handleEmojiClick} previewConfig={{showPreview: false}} height={400} width={300}/></div>}
                         {
-                            template ? <TemplateInput template={template} isLoading={isLoading}/> : 
+                            template ? <TemplateInput template={template} isLoading={isLoading} handleParentInput={handleInputChange}/> : 
                             <div className={`flex-grow flex items-center rounded-full px-4 py-2 transition-all duration-150 ${isLoading ? 'bg-gray-400 text-gray-300' : 'bg-gray-100'}`}>
                                 <input
                                     className="bg-transparent focus:outline-none w-full"

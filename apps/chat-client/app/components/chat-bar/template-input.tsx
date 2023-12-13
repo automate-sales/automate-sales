@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { TemplateObj } from '../../types';
 
 function parseTemplate(template: any) {
     const segments = [];
     let remainingText = template.body;
 
-    template.variables.forEach(variable => {
+    template.variables.forEach((variable: string) => {
         const parts = remainingText.split(`{{${variable}}}`);
         segments.push(parts[0]);
         segments.push({ variable });
@@ -18,7 +19,7 @@ function parseTemplate(template: any) {
     return segments;
 }
 
-export const TemplateInput = ({ template, isLoading }) => {
+export const TemplateInput = ({ template, isLoading, handleParentInput }: { template: TemplateObj, isLoading: boolean, handleParentInput: any }) => {
     const segments = parseTemplate(template);
     const mirrorRef = useRef(null);
     const [inputValues, setInputValues] = useState(() => {
@@ -38,6 +39,8 @@ export const TemplateInput = ({ template, isLoading }) => {
             currentTemplate = currentTemplate.replace(new RegExp(`{{${key}}}`, 'g'), `{{${inputValues[key]}}}`);
         });
         setFullTemplate(currentTemplate);
+        console.log('CURRENT TEMPLATE ', currentTemplate)
+        handleParentInput({target: {value: currentTemplate }});
     }, [inputValues]); // Only re-run if inputValues changes
     
     useEffect(() => { 
@@ -65,7 +68,6 @@ export const TemplateInput = ({ template, isLoading }) => {
             mirrorSpan.textContent = inputElement.value || inputElement.placeholder;
             inputElement.style.width = `${mirrorSpan.offsetWidth}px`;
         }
-
         updateInputValues(inputElement.name, inputElement.value);
     };
 
