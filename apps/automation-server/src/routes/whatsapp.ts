@@ -71,7 +71,7 @@ export default function(io: SocketIOServer){
                                 logger.info(chat, 'CHAT: ')
                                 if(message.type && mediaTypes.includes(message.type)){
                                     const media = message[message.type] as WhatsappMediaObject
-                                    //logger.info(chat.media, 'media file')
+                                    logger.info(chat.media, 'media file')
                                     // must have test version
                                     const mediaRes = await getFromWhatsappMediaAPI(media.id)
                                     logger.info(mediaRes, 'media response \n MEDIA RESPONSE')
@@ -105,8 +105,6 @@ export default function(io: SocketIOServer){
                                     extractedData && await updateContact(chat.contact_id, extractedData)
                                 }
                                 if(process.env.CRM_INTEGRATION){
-                                    // create or update contact in CRM
-                                    // create chat in CRM
                                     const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
                                         text: chat.text || '',
                                         direction: chat.direction || '',
