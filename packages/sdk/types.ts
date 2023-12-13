@@ -122,11 +122,16 @@ export type ChatObject = {
     contact_object?: any,
     location?: any,
     media?: null | File,
+    template: {
+        name: string,
+        params: string[],
+        language: string
+    },
     mimeType?: string,
     status?: any,
 }
 
-export type ChatItem = Omit<ChatObject, 'media'> & { media?: string; }
+export type ChatItem = Omit<ChatObject, 'media' | 'template'> & { media?: string; };
 
 export interface WhatsAppMediaUploadResponse {
     messaging_product: string;

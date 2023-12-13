@@ -49,7 +49,7 @@ export default function(io: SocketIOServer){
             // VALIDATE WEBHOOK
             const rawBody = (req as SpecialRequest).rawBody;
             const signature = req.headers['x-hub-signature']
-            if(!validateMetaSignature(rawBody, String(signature))) return res.status(200).send('Unauthorized');
+            if(process.env.NODE_ENV != 'test' && !validateMetaSignature(rawBody, String(signature))) return res.status(200).send('Unauthorized');
             if (!body.object || !body.entry?.[0]?.changes?.[0]?.value) return res.status(200).send('Incorrect format. This endpoint expects a whatsapp webhook event');
             
             //logger.info('BODY VALIDATED')
@@ -71,8 +71,10 @@ export default function(io: SocketIOServer){
                                 logger.info(chat, 'CHAT: ')
                                 if(message.type && mediaTypes.includes(message.type)){
                                     const media = message[message.type] as WhatsappMediaObject
-                                    logger.info(chat.media, 'media file')
+                                    //logger.info(chat.media, 'media file')
+                                    // must have test version
                                     const mediaRes = await getFromWhatsappMediaAPI(media.id)
+                                    logger.info(mediaRes, 'media response \n MEDIA RESPONSE')
                                     const arrayBuffer = await downloadFileAsArrayBuffer(mediaRes.url)
                                     const fileName = `${generateMediaId()}.${media.mime_type.split('/')[1]}`
                                     const key = `media/chats/${chat.id}/${fileName}`
@@ -88,9 +90,9 @@ export default function(io: SocketIOServer){
                                 // return socket event
                                 io.emit('new_message', chat)
 
-                                
+
                                 // POST PROCESSING
-                                logger.info(chat, 'POST PROCESSING CHAT: ')
+                                //logger.info(chat, 'POST PROCESSING CHAT: ')
                                 // analyze w chat gpt
                                 if(process.env.SENTIMENT_ANALYSIS){
                                     const gptResponse = await analyzeSentiment(chat.text || '')
@@ -102,32 +104,42 @@ export default function(io: SocketIOServer){
                                     logger.info(extractedData, 'EXTRACTED DATA: ')
                                     extractedData && await updateContact(chat.contact_id, extractedData)
                                 }
-                                // write in monday.com
-                                const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
-                                    text: chat.text || '',
-                                    direction: chat.direction || '',
-                                    chat_status: chat.status || '',
-                                    chat_type: chat.type || '',
-                                    message_date: getMondayDateTime(chat.chatDate),
-                                    message_date_ms: chat.chatDate?.getTime(),
-                                    phone_number: chat.contact.phone_number || '',
-                                    sentiment: chat.sentiment || '',
-                                    language: chat.language || ''
-                                })
-                                logger.info(mondayItem, 'MONDAY ITEM: ')
+                                if(process.env.CRM_INTEGRATION){
+                                    // create or update contact in CRM
+                                    // create chat in CRM
+                                    const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
+                                        text: chat.text || '',
+                                        direction: chat.direction || '',
+                                        chat_status: chat.status || '',
+                                        chat_type: chat.type || '',
+                                        message_date: getMondayDateTime(chat.chatDate),
+                                        message_date_ms: chat.chatDate?.getTime(),
+                                        phone_number: chat.contact.phone_number || '',
+                                        sentiment: chat.sentiment || '',
+                                        language: chat.language || ''
+                                    })
+                                    logger.info(mondayItem, 'MONDAY ITEM: ')
+                                }
                             }
+
+
                         // process a status update
                         } else if(value.statuses){
                             //logger.info('STATUS UPDATE')
                             for(let status of value.statuses){
                                 //logger.info(status, 'STATUS: ')
                                 const chat = await updateChatByWaId(status.id, { status: status.status })
+                                // update in CRM
                                 io.emit('status_update', chat)
                             }
                         } else {
-                            //logger.info(value, 'recieved a unrecognized whatsapp event')
+                            logger.info(value, 'recieved a unrecognized whatsapp event')
                         }
                     }
+
+                    // update in crm
+                    // lead
+                    // chat
                 }
             }
             return res.status(200).send('Message recieved')
@@ -175,8 +187,10 @@ export default function(io: SocketIOServer){
             const contactId = fields?.contact_id? fields.contact_id[0] : null
             if(!contactId) throw new Error('No contact_id found in form data')
             let obj = generateMessage(fields, files)
+            logger.info(obj, 'MESSAGE OBJECT')
             const agent = fields?.agent? fields.agent[0] : ''
-            const {media, ...item} = obj
+            const {media, template, ...item} = obj
+            logger.info(item, 'CREATING CHAT ')
             let chat = await createSentChat(item, contactId)
             //logger.info(chat, 'CHAT ! ')
             if(media && media.size > 0){
@@ -195,7 +209,8 @@ export default function(io: SocketIOServer){
                 //logger.info(res, 'chat updated with media')
             }
             const phoneNumber = chat.contact.whatsapp_id
-            const whatsappMessage = await sendMessage(phoneNumber, chat.text, media)
+            logger.info(template, 'template objECT')
+            const whatsappMessage = await sendMessage(phoneNumber, chat.text, media, template)
             //logger.info(whatsappMessage, 'whatsapp message')
             chat = await updateChat(chat.id, { whatsapp_id: whatsappMessage.messages[0].id, status: 'pending' })
             await updateContact(chat.contact_id, { last_chat_date: chat.chatDate, last_chat_text: chat.text })
@@ -207,7 +222,7 @@ export default function(io: SocketIOServer){
                 chat.contact_id,
                 chat.id,
             )
-
+ 
             // create in monday.com
             const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
                 text: chat.text || '',
@@ -222,10 +237,10 @@ export default function(io: SocketIOServer){
 
             return res.status(200).send('Message sent')
         } catch(err){
-            //logger.error(err)
             const errorMessage = err instanceof Error ? 
             err.message? err.message : JSON.stringify(err) :
             `Unknown error: ${err}`
+            logger.error(errorMessage)
             return res.status(500).send(errorMessage)
         }
     })
