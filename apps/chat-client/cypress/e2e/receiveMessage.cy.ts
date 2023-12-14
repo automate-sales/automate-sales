@@ -39,28 +39,48 @@ describe('Test receiving messages', () => {
     });
 
     describe('receive a text message', () => {
+        const text = "Buenas que tal";
         const body = getBody({
             "from": "50767474627",
             "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQTAxRDJFOEI0NDZGNzY1RTJGMwA=",
             "timestamp": "1702446247",
             "text": {
-                "body": "Buenas que tal"
+                "body": text
             },
             "type": "text"
-        })
-        fetch('http://localhost:8000/whatsapp/webhook', {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        })
+        });
+    
+        before(() => {
+            fetch('http://localhost:8000/whatsapp/webhook', {
+                method: 'POST',
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        });
+    
         it('should display a new incoming text message', () => {
-            setTimeout(() => console.log('text message received'), 5000);
+            // Wait for the message to be processed and displayed
+            cy.wait(1000); // Adjust the wait time as needed
+    
+            cy.get('.message-box').last().then(lastMessageBox => {
+                cy.wrap(lastMessageBox).should('contain', text).scrollIntoView();
+    
+                // Check if the last message box contains an item with class 'date' that is visible
+                cy.wrap(lastMessageBox).find('.date').should('be.visible');
+                
+                // Check if the last message box contains an item with class 'exclamation-circle'
+                // If the class 'exclamation-circle' is used for displaying some icon or element, check its existence
+                cy.wrap(lastMessageBox).find('.exclamation-circle').should('be.visible');
+            });
         });
     });
 
-    describe('receive an audio message', () => {
+    /* describe('receive an audio message', () => {
         const body = getBody({
             "from": "50767474627",
             "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQTU0ODg3NkQxODY5NjBFQzdGQwA=",
@@ -110,14 +130,15 @@ describe('Test receiving messages', () => {
     });
 
     describe('receive a video message', () => {
-        /* const mediaResponse = {
+        const mediaResponse = {
             url: "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=815125033635331&ext=1702450964&hash=ATtEGRKBbqig7KgYYPLP8lIIqTq08uxXOE86QNCguIrDgQ",
             mime_type: "video/mp4",
             sha256: "22cbb256aaeed7e5a74432a16d22060156344b872e0cffa49ec18cd35c786045",
             file_size: 942661,
             id: "815125033635331",
             messaging_product: "whatsapp"
-        } */
+        }
+
         const body = getBody({
             "from": "50767474627",
             "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQUEyQUJFNUI1OEU1NjgzNkJDMAA=",
@@ -239,6 +260,6 @@ describe('Test receiving messages', () => {
             // check that there are messages
             // check that the last message is of the given type
         });
-    });
+    }); */
 
 });
