@@ -20,6 +20,8 @@ async function wipeDatabase() {
   console.log('Wiping Data')
   await prisma.chat.deleteMany();
   await prisma.contact.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.user.deleteMany();
 }
 
 async function seedUsers() {

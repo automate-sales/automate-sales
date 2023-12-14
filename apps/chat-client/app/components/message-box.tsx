@@ -144,20 +144,20 @@ function MessageBody({ message }: { message: Chat }): JSX.Element {
 function MessageStatus({ message }: { message: Chat }): JSX.Element{
   if (message.direction === 'incoming') {
     return message.responded ? (
-      <CheckIcon className="text-blue-500 h-6 w-6" />
+      <CheckIcon className="blue-check text-blue-500 h-6 w-6" />
     ) : (
-      <ExclamationCircleIcon className="text-orange-500 h-6 w-6"/>
+      <ExclamationCircleIcon className="exclamation-circle text-orange-500 h-6 w-6"/>
     );
   }
   switch (message.status) {
     case 'sent':
-      return <CheckIcon className="text-green-500 h-6 w-6" />;
+      return <CheckIcon className="green-check text-green-500 h-6 w-6" />;
     case 'delivered':
-      return <CheckCircleIcon className="text-green-500 h-6 w-6" />;
+      return <CheckCircleIcon className="green-check-circle text-green-500 h-6 w-6" />;
     case 'read':
-      return <CheckCircleIcon className="text-blue-500 h-6 w-6" />;
+      return <CheckCircleIcon className="blue-check-circle text-blue-500 h-6 w-6" />;
     case 'failed':
-      return <XCircleIcon className="text-red-500 h-6 w-6" />;
+      return <XCircleIcon className="red-x-circle text-red-500 h-6 w-6" />;
     default:
       return <div/>
   }
@@ -165,7 +165,7 @@ function MessageStatus({ message }: { message: Chat }): JSX.Element{
 
 export default function MessageBox({ message }: { message: Chat }) : JSX.Element {
   return (
-    <div className={`flex ${message.direction === 'outgoing' ? 'flex-row-reverse' : 'flex-row'} items-center mb-2`}>
+    <div className={`message-box flex ${message.direction === 'outgoing' ? 'flex-row-reverse' : 'flex-row'} items-center mb-2`}>
       <div className={`${message.direction === 'outgoing' ? 'bg-green-200' : 'bg-white'} rounded-sm p-4 max-w-xs `}>
         <div className="flex items-center justify-end pb-1">
           {message.direction === 'outgoing' && (
@@ -176,7 +176,7 @@ export default function MessageBox({ message }: { message: Chat }) : JSX.Element
         </div>
         <MessageBody message={message} />
         <div className="flex gap-3 items-center justify-between mt-2 text-sm text-gray-500">
-          <div>{formatDate(message.chatDate)}</div>
+          <div className="date">{formatDate(message.chatDate)}</div>
           <MessageStatus message={message} />
         </div>
         {/* <Link href={`${process.env.NEXT_PUBLIC_MONDAY_URL}/boards/${chatBoardId}/pulses/${message.id}`} target="_blank" className="flex items-center mt-2 text-xs text-blue-600 hover:text-blue-800">
