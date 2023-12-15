@@ -302,7 +302,15 @@ export async function sendMessage(
     }
 }
 
-export async function getFromWhatsappMediaAPI(mediaId: string): Promise<WhatsappMediaResponse>{
+export async function getFromWhatsappMediaAPI(mediaId: string, url: string | null=null): Promise<WhatsappMediaResponse>{
+    if(process.env.NODE_ENV == 'test') return {
+        messaging_product: 'whatsapp',
+        url: url || '',
+        mime_type: 'image/jpeg',
+        sha256: 'sha256',
+        id: mediaId,
+        file_size: 123456
+    }
     const res = await fetch(`https://graph.facebook.com/v18.0/${mediaId}/`, {
         method: 'GET',
         headers: {
@@ -323,9 +331,9 @@ export const downloadFileAsArrayBuffer = async (url: URL | string): Promise<Arra
             String(url),
             {
                 responseType: 'arraybuffer',
-                headers: {
+                ...(process.env.NODE_ENV != 'test' && {headers: {
                     'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`
-                }
+                }})
 
             }
         );

@@ -1,3 +1,6 @@
+const bucketName = `automation-media`
+const MEDIA_BASE_URL = 'http://localhost:9000'
+
 const getBody = (message: any) => {
     return {
         object: "whatsapp_business_account",
@@ -69,18 +72,13 @@ describe('Test receiving messages', () => {
     
             cy.get('.message-box').last().then(lastMessageBox => {
                 cy.wrap(lastMessageBox).should('contain', text).scrollIntoView();
-    
-                // Check if the last message box contains an item with class 'date' that is visible
                 cy.wrap(lastMessageBox).find('.date').should('be.visible');
-                
-                // Check if the last message box contains an item with class 'exclamation-circle'
-                // If the class 'exclamation-circle' is used for displaying some icon or element, check its existence
                 cy.wrap(lastMessageBox).find('.exclamation-circle').should('be.visible');
             });
         });
     });
 
-    /* describe('receive an audio message', () => {
+    describe('receive an audio message', () => {
         const body = getBody({
             "from": "50767474627",
             "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQTU0ODg3NkQxODY5NjBFQzdGQwA=",
@@ -90,18 +88,33 @@ describe('Test receiving messages', () => {
                 "mime_type": "audio/ogg; codecs=opus",
                 "sha256": "5d/0cJu9xLLR0cFhUvEdCVYLo6Mtrnr5QUpmB/hgLPw=",
                 "id": "672626484860429",
-                "voice": true
+                "voice": true,
+                "url": `${MEDIA_BASE_URL}/${bucketName}/media/test/audio.ogg}`
             }
         })
-        fetch('http://localhost:8000/whatsapp/webhook', {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        })
-        it('should display a new incoming audio message', () => {
-            console.log('audio message received');
+        before(() => {
+            fetch('http://localhost:8000/whatsapp/webhook', {
+                method: 'POST',
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        });
+    
+        it('should display a new incoming audio message and play audio', () => {
+            // Wait for the message to be processed and displayed
+            cy.wait(1000); // Adjust the wait time as needed
+    
+            cy.get('.message-box').last().within(() => {
+                cy.get('[data-cy="audio-message"]').should('exist').scrollIntoView();
+                cy.get('[data-cy="toggle-audio"]').click().then(($button) => {
+                    expect($button.find('svg')).to.have.class('pauseIcon');
+                });
+            });
         });
     });
 
@@ -114,31 +127,36 @@ describe('Test receiving messages', () => {
             "image": {
                 "mime_type": "image/jpeg",
                 "sha256": "q5Ar2XXHP3ufqejUxPLQ3UzyMiipdb4Gy3INCxxhA9g=",
-                "id": "738267184813182"
+                "id": "738267184813182",
+                "url": `${MEDIA_BASE_URL}/${bucketName}/media/test/image.jpg`
             }
         })
-        fetch('http://localhost:8000/whatsapp/webhook', {
-            method: 'POST',
-            body: JSON.stringify(body),
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        })
+        before(() => {
+            fetch('http://localhost:8000/whatsapp/webhook', {
+                method: 'POST',
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        });
+    
         it('should display a new incoming image message', () => {
-            console.log('image message received');
+            // Wait for the message to be processed and displayed
+            cy.wait(1000); // Adjust the wait time as needed
+    
+            cy.get('.message-box').last().within(() => {
+                cy.get('[data-cy="image-message"]').should('exist').scrollIntoView();
+                cy.get('img').should('be.visible');
+            });
         });
     });
 
+    
     describe('receive a video message', () => {
-        const mediaResponse = {
-            url: "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=815125033635331&ext=1702450964&hash=ATtEGRKBbqig7KgYYPLP8lIIqTq08uxXOE86QNCguIrDgQ",
-            mime_type: "video/mp4",
-            sha256: "22cbb256aaeed7e5a74432a16d22060156344b872e0cffa49ec18cd35c786045",
-            file_size: 942661,
-            id: "815125033635331",
-            messaging_product: "whatsapp"
-        }
-
         const body = getBody({
             "from": "50767474627",
             "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQUEyQUJFNUI1OEU1NjgzNkJDMAA=",
@@ -147,12 +165,35 @@ describe('Test receiving messages', () => {
             "video": {
                 "mime_type": "video/mp4",
                 "sha256": "IsuyVqru1+WnRDKhbSIGAVY0S4cuDP+knsGM01x4YEU=",
-                "id": "815125033635331"
+                "id": "815125033635331",
+                "url": `${MEDIA_BASE_URL}/${bucketName}/media/test/video.mp4`
             }
         })
-        it('should display a new incoming video message', () => {
-            console.log('video message received');
+
+        before(() => {
+            fetch('http://localhost:8000/whatsapp/webhook', {
+                method: 'POST',
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
         });
+    
+        it('should display a new incoming video message', () => {
+            // Wait for the message to be processed and displayed
+            cy.wait(1000); // Adjust the wait time as needed
+    
+            cy.get('.message-box').last().within(() => {
+                cy.get('[data-cy="video-message"]').should('exist').scrollIntoView();
+                cy.get('video').should('be.visible');
+                // video should be playable
+            });
+        });
+
     });
 
     describe('receive a contact message', () => {
@@ -177,8 +218,27 @@ describe('Test receiving messages', () => {
                 }
             ]
         })
+        before(() => {
+            fetch('http://localhost:8000/whatsapp/webhook', {
+                method: 'POST',
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        });
         it('should display a new incoming contact message', () => {
-            console.log('contact message received');
+            cy.wait(1000); // Adjust the wait time as needed
+    
+            cy.get('.message-box').last().within(() => {
+                cy.get('[data-cy="contact-message"]').should('exist').scrollIntoView();
+                cy.get('[data-cy="contact-link"]')
+                .should('exist')
+                .and('have.attr', 'href').and('include', 'tel:');
+            });
         });
     });
 
@@ -196,8 +256,27 @@ describe('Test receiving messages', () => {
             },
             "type": "location"
         })
+        before(() => {
+            fetch('http://localhost:8000/whatsapp/webhook', {
+                method: 'POST',
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        });
         it('should display a new incoming location message', () => {
-            console.log('location message received');
+            cy.wait(1000); // Adjust the wait time as needed
+    
+            cy.get('.message-box').last().within(() => {
+                cy.get('[data-cy="location-message"]').should('exist').scrollIntoView();
+                cy.get('[data-cy="google-maps-link"]')
+                  .should('exist')
+                  .and('have.attr', 'href').and('include', 'https://www.google.com/maps');
+            });
         });
     });
 
@@ -207,12 +286,33 @@ describe('Test receiving messages', () => {
             "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQTM3MTgzRjVGRkU2M0VBNkEyRgA=",
             "timestamp": "1702451886",
             "text": {
-                "body": "https://www.whatsapp.com/"
+                "body": "https://logflare.app/"
             },
             "type": "text"
         })
+        before(() => {
+            fetch('http://localhost:8000/whatsapp/webhook', {
+                method: 'POST',
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        });
         it('should display a new incoming link message', () => {
-            console.log('link message received');
+            cy.wait(1000); // Adjust the wait time as needed
+    
+            cy.get('.message-box').last().within(() => {
+                cy.get('[data-cy="link-message"]').should('exist').scrollIntoView();
+                cy.get('[data-cy="link-image"]').should('exist');
+                cy.get('img').should('be.visible');
+                cy.get('[data-cy="link-description"]')
+                  .should('exist')
+                  .invoke('text').should('have.length.greaterThan', 0);
+            });
         });
     });
 
@@ -226,11 +326,30 @@ describe('Test receiving messages', () => {
                 "filename": "2023 12 11_Why-do-organizations-have-COOs.pdf",
                 "mime_type": "application/pdf",
                 "sha256": "wo9EG3RA0uRR/mCrLQttaNPwTso3ICotqN5WXdx8vyM=",
-                "id": "871319194632522"
+                "id": "871319194632522",
+                "url": `${MEDIA_BASE_URL}/${bucketName}/media/test/document.pdf`
             }
         })
+        before(() => {
+            fetch('http://localhost:8000/whatsapp/webhook', {
+                method: 'POST',
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        });
+    
         it('should display a new incoming document message', () => {
-            console.log('document message received');
+            // Wait for the message to be processed and displayed
+            cy.wait(1000); // Adjust the wait time as needed
+    
+            cy.get('.message-box').last().within(() => {
+                cy.get('[data-cy="icon-message"]').should('exist').scrollIntoView();
+            });
         });
     });
 
@@ -245,12 +364,32 @@ describe('Test receiving messages', () => {
                     "mime_type": "image/webp",
                     "sha256": "TiMJqfww1+ip8+Yy0q9zXM6xYgwmobOmaE0ebDGwuGY=",
                     "id": "1072271867234478",
-                    "animated": false
+                    "animated": false,
+                    "url": `${MEDIA_BASE_URL}/${bucketName}/media/test/sticker.webp`
                 }
             })
-        it('should display a new incoming sticker message', () => {
-            console.log('sticker message received');
-        });
+            before(() => {
+                fetch('http://localhost:8000/whatsapp/webhook', {
+                    method: 'POST',
+                    body: JSON.stringify(body),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+            });
+        
+            it('should display a new incoming sticker message', () => {
+                // Wait for the message to be processed and displayed
+                cy.wait(1000); // Adjust the wait time as needed
+        
+                cy.get('.message-box').last().within(() => {
+                    cy.get('[data-cy="image-message"]').should('exist').scrollIntoView();
+                    cy.get('img').should('be.visible');
+                });
+            });
     });
 
     describe('receive an other message', () => {
@@ -260,6 +399,6 @@ describe('Test receiving messages', () => {
             // check that there are messages
             // check that the last message is of the given type
         });
-    }); */
+    });
 
 });

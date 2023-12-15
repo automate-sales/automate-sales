@@ -13,7 +13,7 @@ export function AudioMessage({ message }: { message: Chat }): JSX.Element {
   const audioRef = useRef(null) as MutableRefObject<HTMLAudioElement|null>;
   const handleToggleAudio = (): void => {
       if (!audioRef.current) {
-          audioRef.current = new Audio(message.media);
+          audioRef.current = new Audio(message.media || undefined);
           audioRef.current.addEventListener('ended', () => { setIsPlaying(false) });
       }
       if (isPlaying) audioRef.current.pause();
@@ -22,11 +22,11 @@ export function AudioMessage({ message }: { message: Chat }): JSX.Element {
   };
 
   return (
-    <div className="flex items-center justify-center space-x-2">
+    <div className="flex items-center justify-center space-x-2" data-cy="audio-message">
       <span>Audio</span>
-      <button onClick={handleToggleAudio} type='button'>
-        {isPlaying ? <PauseIcon aria-label="Pause" className="h-6 w-6"/> : 
-          <PlayIcon aria-label="Play" className="h-6 w-6"/>
+      <button onClick={handleToggleAudio} type='button' data-cy="toggle-audio">
+        {isPlaying ? <PauseIcon aria-label="Pause" className="pauseIcon h-6 w-6"/> : 
+          <PlayIcon aria-label="Play" className="playIcon h-6 w-6"/>
         }
       </button>
     </div>

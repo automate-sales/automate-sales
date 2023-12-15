@@ -75,10 +75,11 @@ export default function(io: SocketIOServer){
                                     const media = message[message.type] as WhatsappMediaObject
                                     //logger.info(chat.media, 'media file')
                                     // must have test version
-                                    const mediaRes = await getFromWhatsappMediaAPI(media.id)
+                                    const mediaUrl = process.env.NODE_ENV == 'test' ? media.url : null
+                                    const mediaRes = await getFromWhatsappMediaAPI(media.id, mediaUrl)
                                     //logger.info(mediaRes, 'media response \n MEDIA RESPONSE')
                                     const arrayBuffer = await downloadFileAsArrayBuffer(mediaRes.url)
-                                    //logger.info('array buffer \n ARRAY BUFFER')
+                                    //logger.info(arrayBuffer, 'ARRAY BUFFER')
                                     const fileName = message.document?.filename || `${generateMediaId()}.${media.mime_type.split('/')[1]}`
                                     const key = `media/chats/${chat.id}/${fileName}`
                                     const s3Url = await uploadFileToS3(arrayBuffer, key);
