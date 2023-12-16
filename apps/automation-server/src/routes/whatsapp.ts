@@ -190,7 +190,7 @@ export default function(io: SocketIOServer){
             const contactId = fields?.contact_id? fields.contact_id[0] : null
             if(!contactId) throw new Error('No contact_id found in form data')
             let obj = generateMessage(fields, files)
-            //logger.info(obj, 'MESSAGE OBJECT')
+            console.log('MESSAGE OBJECT ', obj)
             const agent = fields?.agent? fields.agent[0] : ''
             const {media, template, ...item} = obj
             //logger.info(item, 'CREATING CHAT ')

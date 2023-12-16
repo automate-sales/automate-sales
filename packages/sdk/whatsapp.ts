@@ -10,7 +10,7 @@ import FormData from 'form-data';
 import axios from 'axios';
 import { getTypeFromMime } from './s3';
 import { convertWebmToOgg } from './media';
-
+import {v4} from 'uuid'
 
 export const validateMetaSignature = (payload: string, signature: string) => {
     const hash = crypto.createHmac('sha1', process.env.META_APP_SECRET as string).update(payload).digest('hex');
@@ -173,15 +173,17 @@ const extractParams = (templateBody: string) => {
 }
 
 export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
-    console.log('generating message')
-    const messageType = fields?.type[0] ? fields.type[0] : null as string | null
+    console.log('generating message ', fields, files)
+    const messageType = fields?.type?.length > 0 ? fields.type[0] : null as string | null
     if(!messageType) throw new Error('No message type found in form data')
     let chat = {
         type: messageType,
         direction: 'outgoing',
         chatDate: new Date()
     } as ChatObject
-    const text = fields?.text[0] ? fields.text[0] : null as string | null
+
+    console.log('CHAT OBJECT ', chat)
+    const text = fields?.text?.length > 0 ? fields.text[0] : null as string | null
     switch(messageType){
         case 'text':
             if(!text) throw new Error('No text found in text message')
@@ -208,6 +210,7 @@ export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
             chat.location = locationObj
             return chat;
         case 'media':
+            console.log('CHAT IS MEDIA !!!!! ')
             chat.media = files.file[0] as File | null
             return chat;
         case 'template':
@@ -246,7 +249,7 @@ export async function sendMessage(
             wa_id: '50767474627',
         }],
         messages: [{
-            id: 'wamid.HBgLNTA3Njc0NzQ2MjcVAgARGBJFMTRFOENFREE0M0EzMEFDMEYA'
+            id: `wamid.${v4()}`
         }]
     }
     else {
