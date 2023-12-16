@@ -165,7 +165,7 @@ function MessageStatus({ message }: { message: Chat }): JSX.Element{
 
 export default function MessageBox({ message }: { message: Chat }) : JSX.Element {
   return (
-    <div className={`message-box flex ${message.direction === 'outgoing' ? 'flex-row-reverse' : 'flex-row'} items-center mb-2`}>
+    <div className={`message-box flex ${message.direction === 'outgoing' ? 'outgoing flex-row-reverse' : 'incoming flex-row'} items-center mb-2`}>
       <div className={`${message.direction === 'outgoing' ? 'bg-green-200' : 'bg-white'} rounded-sm p-4 max-w-xs `}>
         <div className="flex items-center justify-end pb-1">
           {message.direction === 'outgoing' && (

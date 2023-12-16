@@ -130,10 +130,10 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
 
                         {/* Plus icon and menu */}
                         <div className="relative">
-                            <button className="text-gray-600 hover:text-gray-800" onClick={() => { setIsMenuOpen(!isMenuOpen); }} type="button">
+                            <button id='attachments-button' className="text-gray-600 hover:text-gray-800" onClick={() => { setIsMenuOpen(!isMenuOpen); }} type="button">
                                 <PaperClipIcon className="h-6 w-6" />
                             </button>
-                            <div className={`absolute bottom-10 -left-1 w-48 bg-white shadow-lg rounded-sm overflow-hidden transition-transform transform ${isMenuOpen ? 'scale-100' : 'scale-0'}`}>
+                            <div id='attachments-menu' className={`absolute bottom-10 -left-1 w-48 bg-white shadow-lg rounded-sm overflow-hidden transition-transform transform ${isMenuOpen ? 'scale-100' : 'scale-0'}`}>
                                 {/* Menu Items */}
                                 <MediaButton handleFileChange={handleFileChange}/>
                                 <CameraButton handleFileChange={handleFileChange} />
@@ -149,6 +149,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
                             template ? <TemplateInput template={template} isLoading={isLoading} handleParentInput={handleInputChange}/> : 
                             <div className={`flex-grow flex items-center rounded-full px-4 py-2 transition-all duration-150 ${isLoading ? 'bg-gray-400 text-gray-300' : 'bg-gray-100'}`}>
                                 <input
+                                    id='message-input'
                                     className="bg-transparent focus:outline-none w-full"
                                     disabled={isLoading}
                                     onChange={handleInputChange}
@@ -165,6 +166,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
                         
                         {message || media || template? (
                             <button
+                                id='submit-button'
                                 className="h-10 w-10 rounded-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300"
                                 disabled={isLoading}
                                 type="submit"

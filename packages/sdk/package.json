@@ -5,6 +5,7 @@
     "private": true,
     "dependencies": {
         "dotenv": "latest",
+        "uuid": "latest",
         "@aws-sdk/client-s3": "^3.428.0",
         "sharp": "latest",
         "node-html-parser" : "^6.1.11",
@@ -17,7 +18,8 @@
     "devDependencies": {
       "typescript": "latest",
       "@types/formidable": "latest",
-      "@types/fluent-ffmpeg": "latest"
+      "@types/fluent-ffmpeg": "latest",
+      "@types/uuid": "latest"
     }
 }
   
