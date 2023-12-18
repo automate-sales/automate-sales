@@ -1,5 +1,6 @@
 const bucketName = `automation-media`
 const MEDIA_BASE_URL = 'http://localhost:9000'
+const { v4 } = require('uuid');
 
 const getBody = (message: any) => {
     return {
@@ -35,17 +36,36 @@ const getBody = (message: any) => {
     }
 }
 
-describe('Test receiving messages', () => {
-    beforeEach(() => {
-        cy.login('gabriel@torus-digital.com');
-        cy.get('#Gabriel-Kay').click();
+const receiveMessage = (body: any) => {
+    cy.request({
+      method: 'POST',
+      url: 'http://localhost:8000/whatsapp/webhook',
+      body: body,
+      headers: {
+        'Content-Type': 'application/json'
+      },
     });
+};
 
+describe('Test receiving messages', () => {
+    let contactUrl = ''
+    before(() => {
+        cy.login('gabriel@torus-digital.com');
+        cy.visit('http://localhost:3000');
+        cy.get('#Gabriel-Kay').click().wait(500)
+        cy.url().then(url => {
+            cy.log('url: ', url)
+            contactUrl = url
+         });
+    });
+    beforeEach(() => {
+        cy.visit(contactUrl);
+    });
     describe('receive a text message', () => {
         const text = "Buenas que tal";
         const body = getBody({
             "from": "50767474627",
-            "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQTAxRDJFOEI0NDZGNzY1RTJGMwA=",
+            "id": `wamid.${v4()}`,
             "timestamp": "1702446247",
             "text": {
                 "body": text
@@ -54,74 +74,21 @@ describe('Test receiving messages', () => {
         });
     
         before(() => {
-            fetch('http://localhost:8000/whatsapp/webhook', {
-                method: 'POST',
-                body: JSON.stringify(body),
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
+            receiveMessage(body)
         });
     
         it('should display a new incoming text message', () => {
-            // Wait for the message to be processed and displayed
-            cy.wait(1000); // Adjust the wait time as needed
-    
-            cy.get('.message-box').last().then(lastMessageBox => {
-                cy.wrap(lastMessageBox).should('contain', text).scrollIntoView();
-                cy.wrap(lastMessageBox).find('.date').should('be.visible');
-                cy.wrap(lastMessageBox).find('.exclamation-circle').should('be.visible');
-            });
-        });
-    });
-
-    describe('receive an audio message', () => {
-        const body = getBody({
-            "from": "50767474627",
-            "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQTU0ODg3NkQxODY5NjBFQzdGQwA=",
-            "timestamp": "1702449217",
-            "type": "audio",
-            "audio": {
-                "mime_type": "audio/ogg; codecs=opus",
-                "sha256": "5d/0cJu9xLLR0cFhUvEdCVYLo6Mtrnr5QUpmB/hgLPw=",
-                "id": "672626484860429",
-                "voice": true,
-                "url": `${MEDIA_BASE_URL}/${bucketName}/media/test/audio.ogg}`
-            }
-        })
-        before(() => {
-            fetch('http://localhost:8000/whatsapp/webhook', {
-                method: 'POST',
-                body: JSON.stringify(body),
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
-        });
-    
-        it('should display a new incoming audio message and play audio', () => {
-            // Wait for the message to be processed and displayed
-            cy.wait(1000); // Adjust the wait time as needed
-    
-            cy.get('.message-box').last().within(() => {
-                cy.get('[data-cy="audio-message"]').should('exist').scrollIntoView();
-                cy.get('[data-cy="toggle-audio"]').click().then(($button) => {
-                    expect($button.find('svg')).to.have.class('pauseIcon');
-                });
-            });
+            cy.wait(500);
+            cy.get('.message-box').last().scrollIntoView().should('contain', text).and('be.visible');
+            cy.get('.message-box').last().find('.date').should('be.visible');
+            cy.get('.message-box').last().find('.exclamation-circle').should('be.visible');
         });
     });
 
     describe('receive an image message', () => {
         const body = getBody({
             "from": "50767474627",
-            "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQTQ3RUI2RTI2OTE5MkZGQjNGQwA=",
+            "id": `wamid.${v4()}`,
             "timestamp": "1702450103",
             "type": "image",
             "image": {
@@ -132,24 +99,13 @@ describe('Test receiving messages', () => {
             }
         })
         before(() => {
-            fetch('http://localhost:8000/whatsapp/webhook', {
-                method: 'POST',
-                body: JSON.stringify(body),
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
+            receiveMessage(body)
         });
     
         it('should display a new incoming image message', () => {
-            // Wait for the message to be processed and displayed
-            cy.wait(1000); // Adjust the wait time as needed
-    
-            cy.get('.message-box').last().within(() => {
-                cy.get('[data-cy="image-message"]').should('exist').scrollIntoView();
+            cy.wait(1000);
+            cy.get('.message-box').last().scrollIntoView().within(() => {
+                cy.get('[data-cy="image-message"]').should('exist')
                 cy.get('img').should('be.visible');
             });
         });
@@ -159,7 +115,7 @@ describe('Test receiving messages', () => {
     describe('receive a video message', () => {
         const body = getBody({
             "from": "50767474627",
-            "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQUEyQUJFNUI1OEU1NjgzNkJDMAA=",
+            "id": `wamid.${v4()}`,
             "timestamp": "1702450661",
             "type": "video",
             "video": {
@@ -171,24 +127,13 @@ describe('Test receiving messages', () => {
         })
 
         before(() => {
-            fetch('http://localhost:8000/whatsapp/webhook', {
-                method: 'POST',
-                body: JSON.stringify(body),
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
+            receiveMessage(body)
         });
     
         it('should display a new incoming video message', () => {
-            // Wait for the message to be processed and displayed
-            cy.wait(1000); // Adjust the wait time as needed
-    
-            cy.get('.message-box').last().within(() => {
-                cy.get('[data-cy="video-message"]').should('exist').scrollIntoView();
+            cy.wait(500);
+            cy.get('.message-box').last().scrollIntoView().within(() => {
+                cy.get('[data-cy="video-message"]').should('exist')
                 cy.get('video').should('be.visible');
                 // video should be playable
             });
@@ -196,10 +141,39 @@ describe('Test receiving messages', () => {
 
     });
 
+    describe('receive an audio message', () => {
+        const body = getBody({
+            "from": "50767474627",
+            "id": `wamid.${v4()}`,
+            "timestamp": "1702449217",
+            "type": "audio",
+            "audio": {
+                "mime_type": "audio/ogg; codecs=opus",
+                "sha256": "5d/0cJu9xLLR0cFhUvEdCVYLo6Mtrnr5QUpmB/hgLPw=",
+                "id": "672626484860429",
+                "voice": true,
+                "url": `${MEDIA_BASE_URL}/${bucketName}/media/test/audio.ogg}`
+            }
+        })
+        before(() => {
+            receiveMessage(body)
+        });
+    
+        it('should display a new incoming audio message and play audio', () => {
+            cy.wait(500);
+            cy.get('.message-box').last().scrollIntoView().within(() => {
+                cy.get('[data-cy="audio-message"]').should('exist');
+                cy.get('[data-cy="toggle-audio"]').click().then(($button) => {
+                    expect($button.find('svg')).to.have.class('pauseIcon');
+                });
+            });
+        });
+    });
+
     describe('receive a contact message', () => {
         const body = getBody({
             "from": "50767474627",
-            "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQTlFMUUxRTExODhFODc5MDA0RQA=",
+            "id": `wamid.${v4()}`,
             "timestamp": "1702451588",
             "type": "contacts",
             "contacts": [
@@ -219,22 +193,12 @@ describe('Test receiving messages', () => {
             ]
         })
         before(() => {
-            fetch('http://localhost:8000/whatsapp/webhook', {
-                method: 'POST',
-                body: JSON.stringify(body),
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
+            receiveMessage(body)
         });
         it('should display a new incoming contact message', () => {
-            cy.wait(1000); // Adjust the wait time as needed
-    
-            cy.get('.message-box').last().within(() => {
-                cy.get('[data-cy="contact-message"]').should('exist').scrollIntoView();
+            cy.wait(500); 
+            cy.get('.message-box').last().scrollIntoView().within(() => {
+                cy.get('[data-cy="contact-message"]').should('exist');
                 cy.get('[data-cy="contact-link"]')
                 .should('exist')
                 .and('have.attr', 'href').and('include', 'tel:');
@@ -245,7 +209,7 @@ describe('Test receiving messages', () => {
     describe('receive a location message', () => {
         const body = getBody({
             "from": "50767474627",
-            "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQUJBQjg3MDJEQjI2NkY0QjJDMAA=",
+            "id": `wamid.${v4()}`,
             "timestamp": "1702451765",
             "location": {
                 "address": "Cinta Costera, Panama City, Panamá",
@@ -257,22 +221,12 @@ describe('Test receiving messages', () => {
             "type": "location"
         })
         before(() => {
-            fetch('http://localhost:8000/whatsapp/webhook', {
-                method: 'POST',
-                body: JSON.stringify(body),
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
+            receiveMessage(body)
         });
         it('should display a new incoming location message', () => {
-            cy.wait(1000); // Adjust the wait time as needed
-    
-            cy.get('.message-box').last().within(() => {
-                cy.get('[data-cy="location-message"]').should('exist').scrollIntoView();
+            cy.wait(500); 
+            cy.get('.message-box').last().scrollIntoView().within(() => {
+                cy.get('[data-cy="location-message"]').should('exist');
                 cy.get('[data-cy="google-maps-link"]')
                   .should('exist')
                   .and('have.attr', 'href').and('include', 'https://www.google.com/maps');
@@ -283,7 +237,7 @@ describe('Test receiving messages', () => {
     describe('receive a link message', () => {
         const body = getBody({
             "from": "50767474627",
-            "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQTM3MTgzRjVGRkU2M0VBNkEyRgA=",
+            "id": `wamid.${v4()}`,
             "timestamp": "1702451886",
             "text": {
                 "body": "https://logflare.app/"
@@ -291,22 +245,12 @@ describe('Test receiving messages', () => {
             "type": "text"
         })
         before(() => {
-            fetch('http://localhost:8000/whatsapp/webhook', {
-                method: 'POST',
-                body: JSON.stringify(body),
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
+            receiveMessage(body)
         });
         it('should display a new incoming link message', () => {
-            cy.wait(1000); // Adjust the wait time as needed
-    
-            cy.get('.message-box').last().within(() => {
-                cy.get('[data-cy="link-message"]').should('exist').scrollIntoView();
+            cy.wait(1000);
+            cy.get('.message-box').last().scrollIntoView().within(() => {
+                cy.get('[data-cy="link-message"]').should('exist');
                 cy.get('[data-cy="link-image"]').should('exist');
                 cy.get('img').should('be.visible');
                 cy.get('[data-cy="link-description"]')
@@ -319,7 +263,7 @@ describe('Test receiving messages', () => {
     describe('receive a document message', () => {
         const body = getBody({
             "from": "50767474627",
-            "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQUM0QURBNjI1NzNBRTQzOTVBRgA=",
+            "id": `wamid.${v4()}`,
             "timestamp": "1702452354",
             "type": "document",
             "document": {
@@ -331,22 +275,11 @@ describe('Test receiving messages', () => {
             }
         })
         before(() => {
-            fetch('http://localhost:8000/whatsapp/webhook', {
-                method: 'POST',
-                body: JSON.stringify(body),
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
+            receiveMessage(body)
         });
     
         it('should display a new incoming document message', () => {
-            // Wait for the message to be processed and displayed
-            cy.wait(1000); // Adjust the wait time as needed
-    
+            cy.wait(500); 
             cy.get('.message-box').last().within(() => {
                 cy.get('[data-cy="icon-message"]').should('exist').scrollIntoView();
             });
@@ -357,7 +290,7 @@ describe('Test receiving messages', () => {
         const body = getBody(
             {
                 "from": "50767474627",
-                "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgASGBQzQUE3QzE2OUQ5NzU3MzVEMUM2RQA=",
+                "id": `wamid.${v4()}`,
                 "timestamp": "1702452438",
                 "type": "sticker",
                 "sticker": {
@@ -369,24 +302,13 @@ describe('Test receiving messages', () => {
                 }
             })
             before(() => {
-                fetch('http://localhost:8000/whatsapp/webhook', {
-                    method: 'POST',
-                    body: JSON.stringify(body),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                })
-                .then(response => response.json())
-                .then(data => console.log(data))
-                .catch(error => console.error('Error:', error));
+                receiveMessage(body)
             });
         
             it('should display a new incoming sticker message', () => {
-                // Wait for the message to be processed and displayed
                 cy.wait(1000); // Adjust the wait time as needed
-        
-                cy.get('.message-box').last().within(() => {
-                    cy.get('[data-cy="image-message"]').should('exist').scrollIntoView();
+                cy.get('.message-box').last().scrollIntoView().within(() => {
+                    cy.get('[data-cy="image-message"]').should('exist');
                     cy.get('img').should('be.visible');
                 });
             });

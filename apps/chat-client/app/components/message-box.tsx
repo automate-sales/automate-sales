@@ -33,6 +33,7 @@ function IconMessage({ message, icon }: { message: Chat, icon: JSX.Element }): J
 };
 
 function ImageMessage({ message }: { message: Chat  }): JSX.Element{
+  console.log('IMAGE MESSAGE ', message)
   return message.media ? (
     <div className="flex items-center justify-center" data-cy="image-message">
       {
