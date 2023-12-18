@@ -151,6 +151,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.0.7
         version: 18.2.3
+      '@types/uuid':
+        specifier: latest
+        version: 9.0.7
       autoprefixer:
         specifier: latest
         version: 10.4.16(postcss@8.4.31)
@@ -181,6 +184,9 @@ importers:
       typescript:
         specifier: latest
         version: 5.2.2
+      uuid:
+        specifier: latest
+        version: 9.0.1
 
   packages/database:
     dependencies:
@@ -6826,7 +6832,6 @@ packages:
   /uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
     hasBin: true
-    dev: false
 
   /v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}

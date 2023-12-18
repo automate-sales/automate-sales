@@ -14,7 +14,7 @@ let socket = null as Socket | null;
 type ContactWChats = Contact & {chats?: Chat[]};
 export function SideBarContent({contacts, agent}: {contacts: ContactWChats[], agent:string}): JSX.Element {
   const [contactList, setContactList] = useState<ContactWChats[]>(contacts);
-  console.log('CONTACT LIST ', contacts)
+  //console.log('CONTACT LIST ', contacts)
   useEffect(() => {
     setContactList(contacts);
   }, [contacts]);

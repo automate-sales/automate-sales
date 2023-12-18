@@ -1,7 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { PaperClipIcon, FaceSmileIcon, CameraIcon, StarIcon, ChevronRightIcon, ArrowRightIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { 
+    PaperClipIcon, 
+    FaceSmileIcon, 
+    ArrowRightIcon, 
+    MapPinIcon 
+} from '@heroicons/react/24/outline';
 import { MediaButton } from './media-button';
 import { AudioButton } from './audio-button';
 import { ContactButton } from './contact-button';

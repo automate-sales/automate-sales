@@ -1,5 +1,3 @@
-
-
 'use client'
 
 import { MicrophoneIcon, XMarkIcon, CheckIcon } from "@heroicons/react/24/outline";
@@ -78,20 +76,21 @@ export function AudioButton({handleFileChange}:{handleFileChange: any}): JSX.Ele
   return (
     <div className="flex">
       {audioUrl ? <div className="flex items-center gap-2">
-          <button className="bg-red-500 p-2 h-10 w-10 rounded-full flex items-center justify-center" onClick={cancelAudio} type="button">
-              <XMarkIcon className="h-5 w-5 text-white" />
-            </button>
-          <audio className="h-10" controls src={audioUrl}>
+          <button className="bg-red-500 p-2 h-10 w-10 rounded-full flex items-center justify-center" onClick={cancelAudio} type="button" data-cy="audio-cancel-button">
+            <XMarkIcon className="h-5 w-5 text-white" />
+          </button>
+          <audio className="h-10" controls src={audioUrl} data-cy="audio-playback">
             <track kind="captions" />
           </audio>
-            <button className="bg-green-500 p-2 rounded-full" onClick={uploadAudio} type="button">
-              <CheckIcon className="h-5 w-5 text-white" />
-            </button>
+          <button className="bg-green-500 p-2 rounded-full" onClick={uploadAudio} type="button" data-cy="audio-confirm-button">
+            <CheckIcon className="h-5 w-5 text-white" />
+          </button>
         </div> : null}
       <button
           className={`h-10 w-10 rounded-full flex items-center justify-center ${isRecording ? 'bg-red-600' : 'bg-gray-200'} transition-colors duration-150`}
           onClick={isRecording ? stopRecording : startRecording} 
           type="button"
+          data-cy="audio-record-button"
       >
           <MicrophoneIcon className="h-6 w-6 text-gray-600" />
       </button>

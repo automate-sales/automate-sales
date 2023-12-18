@@ -64,7 +64,7 @@ io.on('connection', (socket) => {
     socket.on('seen_by', (data) => {
         console.log('USER SEEN BY: ', data);
         setSeenByChats(data.agent, data.contact_id)
-        .then((res)=> console.log('seen by updated: ', res))
+        //.then((res)=> console.log('seen by updated: ', res))
         .catch((err)=> console.log('error updating seen by: ', err))  
     }); 
 

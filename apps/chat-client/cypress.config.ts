@@ -5,10 +5,12 @@ import ms from 'smtp-tester'
 
 type Device = 'desktop' | 'mobile'
 export default defineConfig({
+  chromeWebSecurity: false,
   viewportWidth: 1030,
   viewportHeight: 660,
   video: false,
   e2e: {
+    testIsolation: false,
     setupNodeEvents(on, config) {
       //require("cypress-localstorage-commands/plugin")(on, config);
       console.log(process.env.EMAIL_HOST)
@@ -73,6 +75,9 @@ export default defineConfig({
           // thus we return null as a fallback
           return lastEmail[email] || null
         },
+        login() {
+          
+        }
       })
       return config;
     }

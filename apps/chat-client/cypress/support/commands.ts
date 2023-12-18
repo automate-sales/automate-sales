@@ -47,19 +47,27 @@ declare global {
     }
 }
 
-Cypress.Commands.add('login', (email: string) => {
+Cypress.Commands.add('login', (email) => {
+  cy.session(email, () => {
     cy.clearAllCookies()
     cy.visit('localhost:3000/api/auth/signin')
-    .wait(1000)
     cy.get('#input-email-for-email-provider')
-    .type(email)
-    .should('have.value', email)
-    .type('{enter}')
-    .wait(1000)
+      .type(email)
+      .should('have.value', email)
+      .type('{enter}')
+
     cy.task('getLastEmail', email).then((email:{body:string, html:string}) => {
-        let body = email.body.toString()
-        let url = body.slice(body.indexOf('http'))
-        expect(url).to.not.be.empty
-        cy.visit({url: url, method: 'POST'})
+      let body = email.body.toString()
+      let url = body.slice(body.indexOf('http'))
+      expect(url).to.not.be.empty
+      cy.visit({url: url, method: 'POST'})
     })
+  }, {
+    // Optional: Provide a validate function to confirm the session is still valid
+    validate() {
+      cy.request('/api/auth/session').its('body').then(session => {
+        expect(session).to.have.property('user')
+      });
+    }
+  });
 });
