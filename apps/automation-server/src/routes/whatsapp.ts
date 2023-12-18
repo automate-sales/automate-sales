@@ -93,6 +93,7 @@ export default function(io: SocketIOServer){
                                 }
                                 // return socket event
 
+                                logger.info(chat, 'EMITTING NEW MESSAGE')
                                 io.emit('new_message', chat)
 
 
