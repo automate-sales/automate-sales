@@ -185,14 +185,32 @@ export default function(io: SocketIOServer){
     router.post("/message", async (req, res, next) => {
         console.log('MESSAGE ENDPOINT TRIGERRED ')
         try{
-            //logger.info('MESSAGE ENDPOINT TRIGERRED ')
-            const { fields, files } = await formPromise(req)
-            //logger.info(fields, 'form fields')
-            const contactId = fields?.contact_id? fields.contact_id[0] : null
+            let reqType, fields, files, contactId, obj, agent;
+            if (req.headers['content-type'] === 'application/json') {
+                reqType = 'json';
+                console.log('Processing JSON body');
+                fields = req.body;
+                files = {}; // Assuming no files in JSON request
+                contactId = fields?.contact_id;
+                console.log('CONTACT ID  ', contactId)
+                delete fields.contact_id;
+                agent = ''
+                obj = fields
+            } else {
+                // Process using formidable for form data
+                reqType = 'form'
+                console.log('Processing form data using formidable');
+                const formResults = await formPromise(req);
+                fields = formResults.fields;
+                files = formResults.files;
+                contactId = fields?.contact_id ? fields.contact_id[0] : null;
+                agent = fields?.agent? fields.agent[0] : ''
+                obj = generateMessage(fields, files)
+            }
             if(!contactId) throw new Error('No contact_id found in form data')
-            let obj = generateMessage(fields, files)
+            
             console.log('MESSAGE OBJECT ', obj)
-            const agent = fields?.agent? fields.agent[0] : ''
+            
             const {media, template, ...item} = obj
             //logger.info(item, 'CREATING CHAT ')
             let chat = await createSentChat(item, contactId)
@@ -216,7 +234,7 @@ export default function(io: SocketIOServer){
             //logger.info(template, 'template objECT')
             const whatsappMessage = await sendMessage(phoneNumber, chat.text, media, template)
             //logger.info(whatsappMessage, 'whatsapp message!!!')
-            chat = await updateChat(chat.id, { whatsapp_id: whatsappMessage.messages[0].id, status: 'pending' })
+            chat = await updateChat(chat.id, { whatsapp_id: reqType == 'json' ? obj.whatsapp_id : whatsappMessage.messages[0].id, status: 'pending' })
             await updateContact(chat.contact_id, { last_chat_date: chat.chatDate, last_chat_text: chat.text })
             io.emit('new_message', chat)
             
@@ -226,18 +244,19 @@ export default function(io: SocketIOServer){
                 chat.contact_id,
                 chat.id,
             )
- 
-            // create in monday.com
-            const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
-                text: chat.text || '',
-                direction: chat.direction || '',
-                chat_status: chat.status || '',
-                chat_type: chat.type || '',
-                message_date: getMondayDateTime(chat.chatDate),
-                message_date_ms: chat.chatDate?.getTime(),
-                phone_number: chat.contact.phone_number || ''
-            })
-            //logger.info(mondayItem, 'MONDAY ITEM: ')
+            if(process.env.CRM_INTEGRATION){
+                // create in monday.com
+                const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
+                    text: chat.text || '',
+                    direction: chat.direction || '',
+                    chat_status: chat.status || '',
+                    chat_type: chat.type || '',
+                    message_date: getMondayDateTime(chat.chatDate),
+                    message_date_ms: chat.chatDate?.getTime(),
+                    phone_number: chat.contact.phone_number || ''
+                })
+                //logger.info(mondayItem, 'MONDAY ITEM: ')
+            }
 
             return res.status(200).send('Message sent')
         } catch(err){
