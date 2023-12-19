@@ -152,7 +152,7 @@ function MessageStatus({ message }: { message: Chat }): JSX.Element{
   }
   switch (message.status) {
     case 'sent':
-      return <CheckIcon className="green-check text-green-500 h-6 w-6" />;
+      return <CheckIcon className="green-check text-green-500 h-6 w-6"  />;
     case 'delivered':
       return <CheckCircleIcon className="green-check-circle text-green-500 h-6 w-6" />;
     case 'read':

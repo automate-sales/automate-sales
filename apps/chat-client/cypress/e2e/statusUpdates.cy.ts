@@ -1,71 +1,158 @@
-const statusUpdate = {
-    object: "whatsapp_business_account",
-    entry: [
-    {
-        "id": "109451195532926",
-        "changes": [
+const { v4 } = require('uuid');
+
+const getStatusBody = (
+    status: "sent" | "delivered" | "read" | "failed",
+    id: string
+) => {
+    return {
+        object: "whatsapp_business_account",
+        entry: [
         {
-            "value": {
-            "messaging_product": "whatsapp",
-            "metadata": {
-                "display_phone_number": "15550814416",
-                "phone_number_id": "102033866282874"
-            },
-            "statuses": [
-                {
-                "id": "wamid.HBgLNTA3Njc0NzQ2MjcVAgARGBJFMTRFOENFREE0M0EzMEFDMEYA",
-                "status": "sent" || "delivered" || "read" || "failed",
-                "timestamp": "1702492286",
-                "recipient_id": "50767474627",
-                "conversation": {
-                    "id": "920d2d6909b84b6a811a5652063deb74",
-                    "origin": {
-                    "type": "marketing"
-                    }
+            "id": "109451195532926",
+            "changes": [
+            {
+                "value": {
+                "messaging_product": "whatsapp",
+                "metadata": {
+                    "display_phone_number": "15550814416",
+                    "phone_number_id": "102033866282874"
                 },
-                "pricing": {
-                    "billable": true,
-                    "pricing_model": "CBP",
-                    "category": "marketing"
-                }
-                }
+                "statuses": [
+                    {
+                    "id": id,
+                    "status": status,
+                    "timestamp": "1702492286",
+                    "recipient_id": "50767474627",
+                    "conversation": {
+                        "id": "920d2d6909b84b6a811a5652063deb74",
+                        "origin": {
+                            "type": "marketing"
+                        }
+                    },
+                    "pricing": {
+                        "billable": true,
+                        "pricing_model": "CBP",
+                        "category": "marketing"
+                    }
+                    }
+                ]
+                },
+                "field": "messages"
+            }
             ]
-            },
-            "field": "messages"
         }
         ]
     }
-    ]
 }
 
-describe('Test status update on messages', () => {
-    beforeEach(() => {
+const receiveStatus = async (body: any) => {
+    cy.request({
+        method: 'POST',
+        url: 'http://localhost:8000/whatsapp/webhook',
+        body: body,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+    });
+};
+
+describe('Test receiving messages', () => {
+    const text = "status update test"
+    const waId = `wamid.${v4()}`
+    let contactUrl = ''
+    before(() => {
         cy.login('gabriel@torus-digital.com');
-        cy.get('#Gabriel-Kay').click();
+        cy.visit('http://localhost:3000');
+        cy.get('#Gabriel-Kay').click().wait(500)
+        cy.url().then(url => {
+            cy.log('url: ', url)
+            contactUrl = url
+        })
+
+        // send a message
+        cy.log('WA ID: ', waId)
+        cy.request({
+            method: 'POST',
+            url: 'http://localhost:8000/whatsapp/message',
+            body: {
+                whatsapp_id: waId,
+                name: "status test",
+                type: "text",
+                direction: "outgoing",
+                chatDate: new Date(),
+                text: text,
+                contact_id: "cf6a327d-8157-4aa1-8424-02c28e5b01fc"
+            },
+            headers: {
+              'Content-Type': 'application/json'
+            },
+        });
+    });
+    beforeEach(() => {
+        cy.visit(contactUrl);
     });
     describe('process a sent status update', () => {
-        it('should display a single green checkmark', () => {
-            console.log('status update processed')
+        before(() => {
+            receiveStatus(getStatusBody("sent", waId))
+        });
+        it('should display a single green check mark', () => {
+            cy.wait(100);
+            cy.get('.message-box').last().scrollIntoView()
+            .should('contain', text).and('be.visible')
+            cy.get('.message-box').last().find('.green-check').should('be.visible');
         });
     });
+
     describe('process a delivered status update', () => {
+        before(() => {
+            receiveStatus(getStatusBody("delivered", waId))
+        });
         it('should display a green circle with checkmark', () => {
-            console.log('status update processed')
+            cy.wait(100);
+            cy.get('.message-box').last().scrollIntoView()
+            .should('contain', text).and('be.visible')
+            cy.get('.message-box').last().find('.green-check-circle').should('be.visible');
         });
     });
+
     describe('process a read status update', () => {
+        before(() => {
+            receiveStatus(getStatusBody("read", waId))
+        });
         it('should display a blue circle with checkmark', () => {
-            console.log('status update processed')
+            cy.wait(100);
+            cy.get('.message-box').last().scrollIntoView()
+            .should('contain', text).and('be.visible')
+            cy.get('.message-box').last().find('.blue-check-circle').should('be.visible');
         });
     });
-    describe('process simulatneous status updates', () => {
+
+    describe('process simulatneous unordered status updates', () => {
+        before(() => {
+            receiveStatus(getStatusBody("delivered", waId))
+            .then(()=>{
+                cy.wait(100);
+                receiveStatus(getStatusBody("sent", waId))
+            })
+        });
+        
         it('should display a delivered status even when the delivered status update is recieved before sent', () => {
-            console.log('status update processed')
+            cy.wait(100);
+            cy.get('.message-box').last().scrollIntoView()
+            .should('contain', text).and('be.visible')
+            cy.get('.message-box').last().find('.green-check-circle').should('be.visible');
         });
     });
+    
     describe('process a failed status update', () => {
+        before(() => {
+            receiveStatus(getStatusBody("failed", waId))
+        });
         it('should display a reed circle with an exclamation mark', () => {
-            console.log('status update processed')
+            cy.wait(100);
+            cy.get('.message-box').last().scrollIntoView()
+            .should('contain', text).and('be.visible')
+            cy.get('.message-box').last().find('.red-x-circle').should('be.visible');
         });
     });
-});
+})
