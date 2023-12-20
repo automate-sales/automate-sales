@@ -1,6 +1,5 @@
-const ENV = process.env.NODE_ENV || 'development';
 import dotenv from 'dotenv';
-dotenv.config({ path: `.env.${ENV}` });
+dotenv.config();
 
 import express from 'express';
 import https from 'https'

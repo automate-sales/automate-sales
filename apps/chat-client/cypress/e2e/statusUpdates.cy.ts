@@ -56,7 +56,7 @@ const receiveStatus = async (body: any) => {
     });
 };
 
-describe('Test receiving messages', () => {
+describe('Test receiving status updates', () => {
     const text = "status update test"
     const waId = `wamid.${v4()}`
     let contactUrl = ''
@@ -64,29 +64,26 @@ describe('Test receiving messages', () => {
         cy.login('gabriel@torus-digital.com');
         cy.visit('http://localhost:3000');
         cy.get('#Gabriel-Kay').click().wait(500)
-        cy.url().then(url => {
+        cy.url().then((url:string) => {
             cy.log('url: ', url)
             contactUrl = url
+            cy.request({
+                method: 'POST',
+                url: 'http://localhost:8000/whatsapp/message',
+                body: {
+                    whatsapp_id: waId,
+                    name: "status test",
+                    type: "text",
+                    direction: "outgoing",
+                    chatDate: new Date(),
+                    text: text,
+                    contact_id: url.split('/').pop()
+                },
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+            });
         })
-
-        // send a message
-        cy.log('WA ID: ', waId)
-        cy.request({
-            method: 'POST',
-            url: 'http://localhost:8000/whatsapp/message',
-            body: {
-                whatsapp_id: waId,
-                name: "status test",
-                type: "text",
-                direction: "outgoing",
-                chatDate: new Date(),
-                text: text,
-                contact_id: "cf6a327d-8157-4aa1-8424-02c28e5b01fc"
-            },
-            headers: {
-              'Content-Type': 'application/json'
-            },
-        });
     });
     beforeEach(() => {
         cy.visit(contactUrl);
@@ -130,8 +127,7 @@ describe('Test receiving messages', () => {
     describe('process simulatneous unordered status updates', () => {
         before(() => {
             receiveStatus(getStatusBody("delivered", waId))
-            .then(()=>{
-                cy.wait(100);
+            cy.wait(200).then(() => {
                 receiveStatus(getStatusBody("sent", waId))
             })
         });

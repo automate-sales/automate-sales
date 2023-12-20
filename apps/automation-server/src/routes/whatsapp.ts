@@ -1,6 +1,5 @@
-const ENV = process.env.NODE_ENV || 'development';
 import dotenv from 'dotenv';
-dotenv.config({ path: `.env.${ENV}` });
+dotenv.config();
 
 import logger from '../../logger';
 import { Router, Request } from 'express';
@@ -153,7 +152,7 @@ export default function(io: SocketIOServer){
             const errorMessage = err instanceof Error ? 
             err.message? err.message : JSON.stringify(err) :
             `Unknown error: ${err}`
-            if(ENV == 'production') return res.status(500).send(errorMessage)
+            if(process.env.NODE_ENV == 'production') return res.status(500).send(errorMessage)
             else return res.status(200).send(errorMessage)
         }
     });

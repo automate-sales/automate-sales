@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
+    "test": "start-server-and-test dev http://localhost:3000 \"cypress run --e2e\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
