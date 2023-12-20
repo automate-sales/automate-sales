@@ -3,8 +3,8 @@ dotenv.config();
 
 import logger from '../../logger';
 import { Router, Request } from 'express';
-import { analyzeSentiment, extractDemographicData } from 'sdk/openai';
-import { getMondayDateTime, mondayCreateItem } from 'sdk/monday';
+import { analyzeSentiment, extractDemographicData, extractTextFromAudio } from 'sdk/openai';
+import { createOrUpdateContact, getMondayDateTime, mondayCreateItem } from 'sdk/monday';
 
 import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
 import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
@@ -110,6 +110,9 @@ export default function(io: SocketIOServer){
                                     extractedData && await updateContact(chat.contact_id, extractedData)
                                 }
                                 if(process.env.CRM_INTEGRATION){
+                                    // create or update a contact
+                                    const contact = await createOrUpdateContact(chat.contact_id)
+                                    // create a chat
                                     const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
                                         text: chat.text || '',
                                         direction: chat.direction || '',
@@ -121,7 +124,6 @@ export default function(io: SocketIOServer){
                                         sentiment: chat.sentiment || '',
                                         language: chat.language || ''
                                     })
-                                    //logger.info(mondayItem, 'MONDAY ITEM: ')
                                 }
                             }
 

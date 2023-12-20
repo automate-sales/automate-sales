@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { Contact } from './path/to/contact';
 dotenv.config();
 
 // make a request to the monday.com API
@@ -169,4 +170,17 @@ export const getMondayDateTime = (date: Date | null=null) => {
     const minutes = now.getUTCMinutes().toString().padStart(2, '0');
     const seconds = now.getUTCSeconds().toString().padStart(2, '0');
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+
+
+export const createOrUpdateContact = async (contact_id: string) => {
+    try{
+        // get contact by website id
+        // if contact exists, update it
+        // if contact does not exist, create it
+        return {}
+    }catch(err){
+        throw new Error(err as string);
+    }
 }
