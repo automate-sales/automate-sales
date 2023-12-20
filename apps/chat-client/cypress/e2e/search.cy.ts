@@ -1,6 +1,9 @@
 describe('Test search functionality', () => {
-    beforeEach(() => {
+    before(() => {
         cy.login('gabriel@torus-digital.com');
+    });
+    beforeEach(() => {
+        cy.visit('http://localhost:3000');
     });
 
     describe('search for a contact', () => {

@@ -53,7 +53,7 @@ describe('Test sending messages', () => {
             cy.get('#submit-button').should('be.visible').click().wait(100);
             // Assert that the new outgoing image message is displayed
             cy.get('.message-box').last().scrollIntoView().should('have.class', 'outgoing');
-            cy.get('.message-box').last().find('video').should('be.visible');
+            cy.get('.message-box').last().find('video').scrollIntoView().should('be.visible');
             // Add more assertions as needed
             // video should be playable
         });

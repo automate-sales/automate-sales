@@ -6,8 +6,7 @@
     "dev": "tsx watch src/app.ts",
     "build": "node build.js",
     "start": "node dist/app.js",
-    "type-check": "tsc",
-    "test": "mocha ./test/**/*.ts"
+    "type-check": "tsc"
   },
   "author": "gkpty",
   "license": "MIT",

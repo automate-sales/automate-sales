@@ -36,8 +36,7 @@ services:
 
   automation-server:
     build:
-      context: ./apps/automation-server
-      dockerfile: Dockerfile
+      dockerfile: ./apps/automation-server/Dockerfile
     environment:
       NODE_ENV: test
       DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ergonomica"
@@ -46,7 +45,7 @@ services:
       MEDIA_BASE_URL: "http://chat-client:9000"
       
     ports:
-      - "$CONTAINER_PORT:$CONTAINER_PORT"
+      - "8000:8000"
     depends_on:
       - postgres
       - minio

@@ -1,6 +1,5 @@
 import dotenv from 'dotenv';
-const NODE_ENV = process.env.NODE_ENV || 'development';
-dotenv.config({ path: `.env.${NODE_ENV}`});
+dotenv.config();
 
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { createPublicBucket, uploadImageToS3, wipeS3Bucket } from "sdk/s3";
@@ -166,7 +165,7 @@ async function seedData() {
 async function main() {
   try{
     console.log('SHEDZEER!! ')
-    if (NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       await createPublicBucket(bucketName)
     }
     await wipeData()
