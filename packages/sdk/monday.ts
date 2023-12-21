@@ -1,5 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
+import contactBoard from './mondayBoardDefinitions/contact'
+import { removeEmptyFields } from './utils';
 
 // make a request to the monday.com API
 // returns a succesful response in the format response = { data: [queryName]: []|{} }
@@ -214,15 +216,10 @@ type Relation = {
     value: any;
 };
 
-type Chat = {
-    // Define properties based on your model
-    [key: string]: any;
-};
-
-export function convertToMondayColumnValues(chat: Chat, boardDef: BoardDefinition, relations?: Relation[]): any {
+export function convertToMondayColumnValues(obj: {[key:string]: any}, boardDef: BoardDefinition, relations?: Relation[]): any {
     let columnValues: { [key: string]: any } = {};
 
-    Object.keys(chat).forEach(key => {
+    Object.keys(obj).forEach(key => {
         if (key in boardDef) {
             const columnType = boardDef[key].column_type;
 
@@ -231,16 +228,16 @@ export function convertToMondayColumnValues(chat: Chat, boardDef: BoardDefinitio
                 case 'email':
                 case 'status':
                 case 'link':
-                    columnValues[key] = chat[key] || '';
+                    columnValues[key] = obj[key] || '';
                     break;
                 case 'date':
-                    columnValues[key] = chat[key] ? { date: chat[key].toISOString() } : null;
+                    columnValues[key] = obj[key] ? { date: obj[key].toISOString() } : null;
                     break;
                 case 'checkbox':
-                    columnValues[key] = chat[key] ? 'true' : 'false';
+                    columnValues[key] = {checked: obj[key] ? 'true' : 'false'};
                     break;
                 case 'numbers':
-                    columnValues[key] = chat[key] ? chat[key].toString() : '';
+                    columnValues[key] = obj[key] ? obj[key].toString() : '';
                     break;
                 case 'dropdown':
                     break;
@@ -256,9 +253,8 @@ export function convertToMondayColumnValues(chat: Chat, boardDef: BoardDefinitio
             columnValues[relation.field] = { item_ids: [relation.value] }
         }
     });
-
     console.log('columnValues: ', columnValues)
-    return columnValues;
+    return removeEmptyFields(columnValues)
 }
 
 
@@ -335,18 +331,15 @@ export const createOrUpdateContact = async (contact: any) => {
         const existingContact = await getContactByWebsiteId(process.env.MONDAY_CONTACTS_BOARD_ID || '', contact.id)
         console.log('existingContact: ', existingContact)
         // if contact exists, update it
+        const mondayCols = convertToMondayColumnValues(contact, contactBoard)
+        console.log('MONDAY CONTACT ', JSON.stringify(mondayCols, null, 2))
         let res = null
         if(existingContact){
-            res = await mondayUpdateItem(process.env.MONDAY_CONTACTS_BOARD_ID || '', Number(existingContact.id), {
-                email: contact.email,
-                website_id: contact.id
-            })
+            res = await mondayUpdateItem(process.env.MONDAY_CONTACTS_BOARD_ID || '', Number(existingContact.id), mondayCols)
             console.log('updatedContact: ', res)
         } else {
-            res = await mondayCreateItem(process.env.MONDAY_CONTACTS_BOARD_ID || '', contact.name, {
-                email: contact.email,
-                website_id: contact.id
-            })
+            const {name, ...createCols} = mondayCols
+            res = await mondayCreateItem(process.env.MONDAY_CONTACTS_BOARD_ID || '', name, createCols)
             console.log('createdContact: ', JSON.stringify(res, null, 2))
         }
         return res
