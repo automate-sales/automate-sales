@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import { Contact } from './path/to/contact';
 dotenv.config();
 
 // make a request to the monday.com API
@@ -78,7 +77,7 @@ export async function getItem(
 // create an item in a given board with given column values
 // returns a succesful response in the format response = { data: create_item: {id:123, name:'', columnValues:[{}]} }
 export async function mondayCreateItem(
-    boardId: number, // monday.com board ID
+    boardId: number | string, // monday.com board ID
     itemName: string, // monday.com item pulseId
     columnValues: { [key:string]: any } // column values for the item in key value pairs with correct values
 ){   
@@ -94,14 +93,15 @@ export async function mondayCreateItem(
                 name
                 column_values {
                     id
-                    text
+                    type
+                    title
                     value
+                    text
                 }
             }
         }`
-        const res = await mondayRequest(mutation)
-        console.info(' RESPONSE FROM MONDAY!!!! ', res)
-        return res
+        const data = await mondayRequest(mutation)
+        return data.data.create_item
     }catch(err: any){
         throw new Error(err)
     }
@@ -109,25 +109,158 @@ export async function mondayCreateItem(
 
 // update a monday.com item with the itemData provided
 export async function mondayUpdateItem(
-    boardId: number, // id of the monday.com board
+    boardId: number | string, // id of the monday.com board
     itemId: number, // pulse Id of the item to be updated
     columnValues: { [key:string]: any } // column values as a key pairs with valid values
 ){
+    console.info('UPDATING THE ITEM IN MONDAY.COM ***')
     try{
         const mutation = `mutation {
             change_multiple_column_values(
                 item_id: ${itemId}, 
                 board_id: ${boardId}, 
                 column_values: ${JSON.stringify(JSON.stringify(columnValues))}
-            ) {
+            ){
                 id
-            }
+                name
+                column_values {
+                    id
+                    type
+                    title
+                    value
+                    text
+                }
+            } 
         }`
-        return await mondayRequest(mutation)
+        console.log('MUTATION: ', mutation)
+        console.log('boardId: ', boardId)
+        const data = await mondayRequest(mutation)
+        console.log('DATA: ', data)
+        return data.data.change_multiple_column_values
     } catch(err){
         throw err
     }
 }
+type ColumnValue = {
+    id: string;
+    type: string;
+    title: string;
+    value: string | null;
+    text: string | null;
+};
+
+type MondayApiResponse = {
+    id: string;
+    name: string;
+    column_values: ColumnValue[];
+};
+
+type ProcessedColumn = string | number | Date | string[] | number[] | null;
+
+type ProcessedContact = {
+    id: string;
+    name: string;
+    columns: { [key: string]: ProcessedColumn };
+};
+
+function processMondayApiResponse(response: MondayApiResponse): ProcessedContact {
+    const result: ProcessedContact = {
+        id: response.id,
+        name: response.name,
+        columns: {}
+    };
+
+    response.column_values.forEach(col => {
+        switch (col.type) {
+            case 'numeric':
+            case 'rating':
+                result.columns[col.title] = col.text ? Number(col.text) : null;
+                break;
+            case 'date':
+                result.columns[col.title] = col.text ? new Date(col.text) : null;
+                break;
+            case 'board-relation':
+                if (col.value) {
+                    const parsedValue = JSON.parse(col.value);
+                    result.columns[col.title] = parsedValue.linkedPulseIds 
+                        ? parsedValue.linkedPulseIds.map((pulse: { linkedPulseId: number }) => pulse.linkedPulseId)
+                        : [];
+                } else {
+                    result.columns[col.title] = [];
+                }
+                break;
+            case 'dropdown':
+                result.columns[col.title] = col.text ? col.text.split(', ') : [];
+                break;
+            default:
+                result.columns[col.title] = col.text;
+        }
+    });
+
+    return result;
+}
+
+
+type BoardDefinition = {
+    [key: string]: {
+        title: string;
+        column_type: string;
+        labels?: { [key: number]: string };
+    };
+};
+
+type Relation = {
+    field: string;
+    value: any;
+};
+
+type Chat = {
+    // Define properties based on your model
+    [key: string]: any;
+};
+
+export function convertToMondayColumnValues(chat: Chat, boardDef: BoardDefinition, relations?: Relation[]): any {
+    let columnValues: { [key: string]: any } = {};
+
+    Object.keys(chat).forEach(key => {
+        if (key in boardDef) {
+            const columnType = boardDef[key].column_type;
+
+            switch (columnType) {
+                case 'text':
+                case 'email':
+                case 'status':
+                case 'link':
+                    columnValues[key] = chat[key] || '';
+                    break;
+                case 'date':
+                    columnValues[key] = chat[key] ? { date: chat[key].toISOString() } : null;
+                    break;
+                case 'checkbox':
+                    columnValues[key] = chat[key] ? 'true' : 'false';
+                    break;
+                case 'numbers':
+                    columnValues[key] = chat[key] ? chat[key].toString() : '';
+                    break;
+                case 'dropdown':
+                    break;
+                default:
+                    break;
+            }
+        }
+    });
+
+    // Handle relations
+    relations && relations.forEach(relation => {
+        if (relation.field in boardDef) {
+            columnValues[relation.field] = { item_ids: [relation.value] }
+        }
+    });
+
+    console.log('columnValues: ', columnValues)
+    return columnValues;
+}
+
 
 
 /* export async function mondayCreateSubItem(
@@ -173,13 +306,50 @@ export const getMondayDateTime = (date: Date | null=null) => {
 }
 
 
+const getContactByWebsiteId = async(boardId: string, websiteId: string)=> {
+    const query = `query {
+        boards (ids: ${boardId}){
+          items_page (limit: 1, query_params: {rules: [{column_id: "website_id", compare_value: ["${websiteId}"]}], operator: and}) {
+            cursor
+            items {
+              id 
+              name 
+              column_values {
+                id
+                value
+                text
+                type
+              }
+            }
+          }
+        }
+    }`
+    const data = await mondayRequest(query, '2023-10')
+    return data.data.boards[0].items_page.items.length > 0 ? data.data.boards[0].items_page.items[0] : null
+}
 
-export const createOrUpdateContact = async (contact_id: string) => {
+export const createOrUpdateContact = async (contact: any) => {
     try{
+        console.log('contact: ', contact)
         // get contact by website id
+        const existingContact = await getContactByWebsiteId(process.env.MONDAY_CONTACTS_BOARD_ID || '', contact.id)
+        console.log('existingContact: ', existingContact)
         // if contact exists, update it
-        // if contact does not exist, create it
-        return {}
+        let res = null
+        if(existingContact){
+            res = await mondayUpdateItem(process.env.MONDAY_CONTACTS_BOARD_ID || '', Number(existingContact.id), {
+                email: contact.email,
+                website_id: contact.id
+            })
+            console.log('updatedContact: ', res)
+        } else {
+            res = await mondayCreateItem(process.env.MONDAY_CONTACTS_BOARD_ID || '', contact.name, {
+                email: contact.email,
+                website_id: contact.id
+            })
+            console.log('createdContact: ', JSON.stringify(res, null, 2))
+        }
+        return res
     }catch(err){
         throw new Error(err as string);
     }

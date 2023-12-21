@@ -4,7 +4,7 @@ dotenv.config();
 import logger from '../../logger';
 import { Router, Request } from 'express';
 import { analyzeSentiment, extractDemographicData, extractTextFromAudio } from 'sdk/openai';
-import { createOrUpdateContact, getMondayDateTime, mondayCreateItem } from 'sdk/monday';
+import { convertToMondayColumnValues, createOrUpdateContact, getMondayDateTime, mondayCreateItem } from 'sdk/monday';
 
 import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
 import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
@@ -14,6 +14,9 @@ import { createReceivedChat, createSentChat, setRespondedChats, updateChat, upda
 import { Server as SocketIOServer } from 'socket.io';
 
 import formidable from 'formidable';
+
+import chatBoard from 'sdk/mondayBoardDefinitions/chat'
+import contactBoard from 'sdk/mondayBoardDefinitions/contact'
 
 export default function(io: SocketIOServer){
     const router: Router = Router();
@@ -111,9 +114,8 @@ export default function(io: SocketIOServer){
                                 }
                                 if(process.env.CRM_INTEGRATION){
                                     // create or update a contact
-                                    const contact = await createOrUpdateContact(chat.contact_id)
-                                    // create a chat
-                                    const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
+                                    const mondayContact = await createOrUpdateContact(chat.contact)                                    // create a chat
+                                    const mondayChat = await mondayCreateItem(5244743938, chat.name || '', {
                                         text: chat.text || '',
                                         direction: chat.direction || '',
                                         chat_status: chat.status || '',
@@ -122,7 +124,8 @@ export default function(io: SocketIOServer){
                                         message_date_ms: chat.chatDate?.getTime(),
                                         phone_number: chat.contact.phone_number || '',
                                         sentiment: chat.sentiment || '',
-                                        language: chat.language || ''
+                                        language: chat.language || '',
+                                        connect_boards: { item_ids: [mondayContact.id] }
                                     })
                                 }
                             }
