@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { TemplateObj } from '../../types';
 
-function parseTemplate(template: any) {
-    const segments = [];
+
+function parseTemplate(template: TemplateObj) {
+    const segments: Array<{variable:string}|string> = [];
     let remainingText = template.body;
 
     template.variables.forEach((variable: string) => {
@@ -21,7 +22,7 @@ function parseTemplate(template: any) {
 
 export const TemplateInput = ({ template, isLoading, handleParentInput }: { template: TemplateObj, isLoading: boolean, handleParentInput: any }) => {
     const segments = parseTemplate(template);
-    const mirrorRef = useRef(null);
+    const mirrorRef = useRef<HTMLSpanElement>(null);
     const [inputValues, setInputValues] = useState(() => {
         const initialInputValues = {};
         segments.forEach(segment => {
@@ -56,11 +57,11 @@ export const TemplateInput = ({ template, isLoading, handleParentInput }: { temp
         });
     }, [])
         
-    const updateInputValues = (variable, value) => {
+    const updateInputValues = (variable:string, value:string) => {
         setInputValues(prev => ({ ...prev, [variable]: value }));
     };
 
-    const handleInputChange = (e) => {
+    const handleInputChange = (e: { target: any; }) => {
         const inputElement = e.target;
         const mirrorSpan = mirrorRef.current;
 
