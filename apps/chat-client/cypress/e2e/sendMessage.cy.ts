@@ -12,12 +12,13 @@ describe('Test sending messages', () => {
     beforeEach(() => {
         cy.log('before each ', this.contactUrl)
         cy.visit(this.contactUrl);
+        cy.wait(300);
     });
     describe('send a text message', () => {
         it('should display a new outgoing text message', () => {
             const text = 'hola esto es una prueba.'
             cy.get('#message-input').click().type(text).should('have.value', text);
-            cy.get('#submit-button').should('be.visible').should('be.enabled').click().wait(100);
+            cy.get('#submit-button').should('be.visible').should('be.enabled').click().wait(200);
             cy.get('.message-box').last().scrollIntoView().then(lastMessageBox => {
                 cy.wrap(lastMessageBox).should('have.class', 'outgoing');
                 cy.wrap(lastMessageBox).should('contain', text);

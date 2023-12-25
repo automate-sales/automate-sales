@@ -1,6 +1,6 @@
 const bucketName = `automation-media`
 const MEDIA_BASE_URL = 'http://localhost:9000'
-const { v4 } = require('uuid');
+import { v4 } from 'uuid';
 
 const getBody = (message: any) => {
     return {

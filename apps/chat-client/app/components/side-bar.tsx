@@ -108,7 +108,7 @@ export async function SideBar({params, searchParams}: {params: any, searchParams
             </button>
         </div>
         </form>
-        <SideBarContent contacts={contacts} agent={user?.email}/>
+        <SideBarContent contacts={contacts} agent={user?.email || ''}/>
       </div>
       }
       
