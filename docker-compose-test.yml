@@ -53,16 +53,14 @@ services:
 
   chat-client:
     build:
-      context: ./apps/chat-client
-      dockerfile: Dockerfile
+      dockerfile: ./apps/chat-client/Dockerfile
     command:
       - sh 
       - -c
       - |
         npx prisma db push
         npx prisma db seed
-        npm run build
-        npm run e2e:headless:chrome
+        npx start-test dev http://localhost:3000 cypress run --e2e
     ports:
       - "3000:3000"
     environment:
