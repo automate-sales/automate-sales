@@ -59,8 +59,8 @@ services:
       - -c
       - |
         npx prisma db push
-        npx prisma db seed
-        npx start-test dev http://localhost:3000 cypress run --e2e
+        node prisma/seed.js
+        npx start-server-and-test 'npx next start' http://localhost:3000 'cypress run --e2e '
     ports:
       - "3000:3000"
     environment:
@@ -70,7 +70,11 @@ services:
       PROJECT_NAME: automation
       NEXT_PUBLIC_MONDAY_URL: "https://torus-digital.monday.com"
       NEXT_PUBLIC_SERVER_URL: "http://automation-server:8000"
+      NEXTAUTH_URL: "http://localhost:3000"
       NEXTAUTH_SECRET: secret12386
+      AWS_REGION: "us-east-1"
+      AWS_DEFAULT_REGION: "us-east-1"
+      MEDIA_BASE_URL: "http://minio:9000"
     depends_on:
       - postgres
       - minio
