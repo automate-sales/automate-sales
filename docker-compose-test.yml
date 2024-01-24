@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres
     environment:
-      POSTGRES_DB: ergonomica
+      POSTGRES_DB: automation
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
@@ -39,11 +39,13 @@ services:
       dockerfile: ./apps/automation-server/Dockerfile
     environment:
       NODE_ENV: test
-      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ergonomica"
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/automation"
       PROJECT_NAME: automation
+      PORT: 8000
       CLIENT_URL: "http://chat-client:3000"
-      MEDIA_BASE_URL: "http://chat-client:9000"
-      
+      MEDIA_BASE_URL: "http://minio:9000"
+      WHATSAPP_BUSINESS_ID: 128414227025571
+      WHATSAPP_PHONE_ID: 102033866282874
     ports:
       - "8000:8000"
     depends_on:
@@ -66,7 +68,7 @@ services:
     environment:
       SKIP_ENV_VALIDATION: "true"
       NODE_ENV: test
-      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ergonomica"
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/automation"
       PROJECT_NAME: automation
       NEXT_PUBLIC_MONDAY_URL: "https://torus-digital.monday.com"
       NEXT_PUBLIC_SERVER_URL: "http://automation-server:8000"
@@ -75,6 +77,9 @@ services:
       AWS_REGION: "us-east-1"
       AWS_DEFAULT_REGION: "us-east-1"
       MEDIA_BASE_URL: "http://minio:9000"
+      EMAIL_HOST: test
+      WHATSAPP_BUSINESS_ID: 128414227025571
+      WHATSAPP_PHONE_ID: 102033866282874
     depends_on:
       - postgres
       - minio

@@ -2,12 +2,11 @@ describe('Test sending messages', () => {
     before(() => {
         cy.login('gabriel@torus-digital.com');
         // get the url and save the url as a constant
-        cy.visit('http://localhost:3000');
-        cy.get('#Gabriel-Kay').click();
-        cy.wait(500);
+        cy.visit('http://localhost:3000').wait(1000)
+        cy.get('#Gabriel-Kay').click().click().wait(2000);
         cy.url().then(currentUrl => {
             this.contactUrl = currentUrl
-         });
+        });
     });
     beforeEach(() => {
         cy.log('before each ', this.contactUrl)
@@ -36,7 +35,7 @@ describe('Test sending messages', () => {
             // Set file to the input and trigger change event
             cy.get('input[type="file"]#file').should('exist').selectFile(fileName, { force: true });
             // Perform the upload action
-            cy.get('#submit-button').should('be.visible').click().wait(100);
+            cy.get('#submit-button').should('be.visible').click().wait(300);
             // Assert that the new outgoing image message is displayed
             cy.get('.message-box').last().scrollIntoView().should('have.class', 'outgoing');
             cy.get('.message-box').last().find('img').should('be.visible');
@@ -85,7 +84,7 @@ describe('Test sending messages', () => {
             // Set file to the input and trigger change event
             cy.get('input[type="file"]#sticker').should('exist').selectFile(fileName, { force: true });
             // Perform the upload action
-            cy.get('#submit-button').should('be.visible').click().wait(100);
+            cy.get('#submit-button').should('be.visible').click().wait(300);
             // Assert that the new outgoing image message is displayed
             cy.get('.message-box').last().scrollIntoView().should('have.class', 'outgoing');
             cy.get('.message-box').last().find('img').should('be.visible');

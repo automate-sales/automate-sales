@@ -51,7 +51,7 @@ describe('Test receiving messages', () => {
     let contactUrl = ''
     before(() => {
         cy.login('gabriel@torus-digital.com');
-        cy.visit('http://localhost:3000');
+        cy.visit('http://localhost:3000').wait(1500)
         cy.get('#Gabriel-Kay').click().wait(500)
         cy.url().then(url => {
             cy.log('url: ', url)

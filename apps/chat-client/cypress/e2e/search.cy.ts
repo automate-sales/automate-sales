@@ -3,7 +3,7 @@ describe('Test search functionality', () => {
         cy.login('gabriel@torus-digital.com');
     });
     beforeEach(() => {
-        cy.visit('http://localhost:3000');
+        cy.visit('http://localhost:3000').wait(1000);
     });
 
     describe('search for a contact', () => {
