@@ -40,7 +40,7 @@ export function SideBarContent({contacts, agent}: {contacts: ContactWChats[], ag
         {
           contactList.map((contact) => (
             <div key={contact.id} id={contact.name?.replaceAll(' ', '-')}>
-              <Link  href={`/contacts/${contact.id}`}>
+              <Link passHref href={`/contacts/${contact.id}`}>
                 <div className='p-2 hover:bg-slate-200'>
                   <div className='flex justify-between'>
                     <div className='text-gray-900 text-sm'>{contact.name}</div>
