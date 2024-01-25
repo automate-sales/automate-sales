@@ -7,7 +7,9 @@
     "@oclif/core": "^3",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-plugins": "^4",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "sdk": "workspace:*",
+    "dotenv": "latest"
   },
   "description": "oclif example Hello World CLI (ESM)",
   "devDependencies": {

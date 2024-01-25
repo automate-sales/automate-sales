@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --loader ts-node/esm --no-warnings=ExperimentalWarning
+#!/usr/bin/env node --loader ts-node/esm --experimental-specifier-resolution=node
 
 // eslint-disable-next-line node/shebang
 async function main() {
