@@ -2,12 +2,21 @@ import {Command, Flags, Args} from '@oclif/core'
 import { createMondayBoard, createMondayColumns } from 'sdk/monday'
 import { config } from 'dotenv';
 import contact from '../../boardDefinitions/contact'
+import company from '../../boardDefinitions/company'
+import deal from '../../boardDefinitions/deal'
+import task from '../../boardDefinitions/task'
 config();
 
 function getBoardDefinition(boardName: string) {
   switch(boardName) {
     case 'contacts':
       return contact;
+    case 'companies':
+      return company;
+    case 'deals':
+      return deal;
+    case 'tasks':
+      return task;
     default:
       return null;
   }

@@ -137,21 +137,21 @@ export default {
     },
 
     // ACTIONS
-    chat_link: {
+    /* chat_link: {
         title: "Chat App",
         description: "Enlace para abrir el chat con la persona en la app de chat",
         column_type: "link"
-    },
+    }, */
     quickbooks_link: {
         title: "Quickbooks ID",
         description: "Enlace al cliente en quickbooks",
         column_type: "link"
     },
-    create_quote: {
+    /* create_quote: {
         title: "Crear Cotizacion",
         description: "Enlace para crear una cotizacion para dicho contacto en quickbooks",
         column_type: "link"
-    },
+    }, */
     convert_company: {
         title: "Convertir Empresa",
         description: "Convierte el contacto en una empresa",

@@ -17,11 +17,11 @@ export default {
         description: "Estado del deal",
         column_type: "status",
         labels: {
-            1: "success",
-            2: "rejected",
+            1: "discovery", //default
+            2: "quote_generated",
             3: "negotiation",
-            4: "quote_generated",
-            5: "discovery" //default
+            4: "rejected",
+            5: "success"
         }
     },
     priority: {
@@ -29,10 +29,10 @@ export default {
         description: "Nivel de prioridad del deal",
         column_type: "status",
         labels: {
-            2: "executive",
+            1: "low", //default
+            2: "medium",
             3: "high",
-            4: "medium",
-            5: "low" //default
+            4: "executive"
         }
     },
     deal_value: {
@@ -76,7 +76,8 @@ export default {
         column_type: "dropdown",
         labels: {
             1: "ergonomica",
-            2: "naural"
+            2: "naural",
+            3: "icepact"
         }
     },
 
@@ -84,16 +85,6 @@ export default {
     total_time: {
         title: "Tiempo total",
         description: "Tiempo total de cierre, desde que se crea un deal hasta que se cierra o se rechaza",
-        column_type: "time_tracking"
-    },
-    quote_time: {
-        title: "Tiempo de confirmación de cotización",
-        description: "Tiempo que tarda un deal en pasar de quote_sent a cerrado o negociación",
-        column_type: "time_tracking"
-    },
-    negotiation_time: {
-        title: "Tiempo de negociación",
-        description: "Tiempo promedio que un deal pasa en estado de negociación",
         column_type: "time_tracking"
     },
 
@@ -112,34 +103,5 @@ export default {
         title: "Actualizacion",
         description: "Información sobre la ultima actualizacion tomada sobre el item",
         column_type: "last_updated"
-    },
-    // deal also contains a mirror column to estimate_status
-    // BOARD CONNECTIONS
-    link_to_empresas: {
-        title: "Empresa",
-        description: "Many-to-One relation entre deal y empresa. Empresa asociada al deal",
-        column_type: "board_relation"
-    },
-    link_to_contactos: {
-        title: "Contactos",
-        description: "Many-to-Many relation entre deal y contacto. Contactos relacionados con el deal",
-        column_type: "board_relation"
-    },
-    board_relation: {
-        title: "Cotizaciones",
-        description: "One-to-Many relation entre deal y cotizacion. Cotizaciones asociadas al deal",
-        column_type: "board_relation"
-    },
-    link_to_facturas: {
-        title: "Facturas",
-        description: "One-to-Many relation entre deal y factura. Facturas relacionadas con el deal",
-        column_type: "board_relation"
-    },
-
-    // MIRROR
-    mirror5: {
-        title: "Cotizacion Status Mirror",
-        description: "Status de la cotizacion",
-        column_type: 'mirror'
-    },
+    }
 };

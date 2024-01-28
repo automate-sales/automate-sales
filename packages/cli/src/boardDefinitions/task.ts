@@ -5,6 +5,16 @@ export default {
         description: "Nombre de la tarea",
         column_type: "text"
     },
+    description: {
+        title: "Descripcion",
+        description: "Descripcion de la tarea",
+        column_type: "long_text"
+    },
+    item_id: {
+        title: "ID",
+        description: "id de la tarea en monday",
+        column_type: "item_id"
+    }, //hidden
     task_status: {
         title: "Status",
         description: "Status de la tarea",
@@ -51,7 +61,7 @@ export default {
         }
     },
     due_date: {
-        title: "Entrega",
+        title: "Fecha Entrega",
         description: "Fecha de entrega de la tarea",
         column_type: "date"
     },

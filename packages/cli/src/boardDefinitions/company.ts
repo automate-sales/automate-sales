@@ -10,16 +10,6 @@ export default {
         description: "identificador único de la empresa en monday",
         column_type: "item_id"
     }, //hidden
-    website_id: {
-        title: "Website ID",
-        description: "Id del lead en el website",
-        column_type: "text"
-    }, //hidden
-    user_id: {
-        title: "User ID",
-        description: "Id del usuario en el website",
-        column_type: "text"
-    }, //hidden
     quickbooks_id: {
         title: "Quickbooks ID",
         description: "ID del cliente en Quickbooks",
@@ -29,22 +19,18 @@ export default {
     contact_status: {
         title: "Status",
         description: "Status del contacto",
-        column_type: "status",
+        column_type: 'status',
         labels: {
-            1: "customer",
-            2: "quote_generated",
-            3: "quote_sent",
-            4: "negotiation",
-            5: "prospect", //default
-            6: "loyalty",
-            7: "deferred"
+            1: 'lead', //default
+            5: 'prospect', 
+            2: 'quote_generated',
+            4: 'negotiation',
+            8: 'customer',
+            6: 'loyalty',
+            7: 'deferred'
         }
     },
-    contact_date: {
-        title: "Fecha Contacto",
-        description: "Fecha en la que el cliente hizo contacto inicial",
-        column_type: "date"
-    },
+
     contact_source: {
         title: "Fuente",
         description: "Canal donde el cliente nos encontro",
@@ -116,7 +102,8 @@ export default {
         column_type: "dropdown",
         labels: {
             1: "ergonomica",
-            2: "naural"
+            2: "naural",
+            3: "icepact"
         }
     },
 
@@ -201,27 +188,15 @@ export default {
         description: "Enlace al cliente en quickbooks",
         column_type: "link"
     },
-    create_quote: {
+    /* create_quote: {
         title: "Crear Cotizacion",
         description: "Enlace para crear una cotizacion para dicha empresa en quickbooks",
         column_type: "link"
-    },
+    }, */
     convert_customer: {
         title: "Convertir Contacto",
         description: "Convierte la empresa en un contacto",
         column_type: "button"
-    },
-
-    // TIME TRACKING METRICS
-    prospecting_time: {
-        title: "Tiempo de prospecto",
-        description: "Tiempo que transcurre desde que se crea un lead nuevo hasta que se convierte en una empresa",
-        column_type: 'time_tracking'
-    },
-    conversion_time: {
-        title: "Tiempo de Conversion",
-        description: "Tiempo que transcurre desde que se crea un lead nuevo hasta que se convierte a un cliente",
-        column_type: 'time_tracking'
     },
 
     // ITEM HISTORY
@@ -241,25 +216,4 @@ export default {
         column_type: "last_updated"
     },
     
-    // BOARD CONNECTIONS
-    link_to_contactos: {
-        title: "Contactos",
-        description: "One-to-Many relation entre empresa y contacto. Lista de contactos asociados a la empresa",
-        column_type: "board_relation" // Assuming you want to connect this to another board of contacts.
-    },
-    link_to_deals: {
-        title: "Deals",
-        description: "One-to-Many relation entre empresa y deal. Deals asociados a la empresa",
-        column_type: "board_relation" // Assuming you want to connect this to another board of deals.
-    },
-    link_to_cotizaciones: {
-        title: "Cotizaciones",
-        description: "One-to-Many relation entre empresa y cotizacion. Cotizaciones asociadas a la empresa",
-        column_type: "board_relation" // Assuming you want to connect this to another board of deals.
-    },
-    link_to_facturas: {
-        title: "Facturas",
-        description: "One-to-Many relation entre empresa y factura. Facturas asociadas a la empresa",
-        column_type: "board_relation" // Assuming you want to connect this to another board of deals.
-    }
 };
