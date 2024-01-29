@@ -10,6 +10,7 @@ export default defineConfig({
   viewportHeight: 660,
   video: false,
   e2e: {
+    experimentalRunAllSpecs: true,
     testIsolation: false,
     setupNodeEvents(on, config) {
       //require("cypress-localstorage-commands/plugin")(on, config);
