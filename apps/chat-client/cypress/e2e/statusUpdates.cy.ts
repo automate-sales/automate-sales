@@ -1,4 +1,5 @@
 import { v4 } from 'uuid';
+const SERVER_URL = Cypress.env('SERVER_URL') || 'http://localhost:8000'
 
 const getStatusBody = (
     status: "sent" | "delivered" | "read" | "failed",
@@ -48,7 +49,7 @@ const getStatusBody = (
 const receiveStatus = async (body: any) => {
     cy.request({
         method: 'POST',
-        url: 'http://localhost:8000/whatsapp/webhook',
+        url: `${SERVER_URL}/whatsapp/webhook`,
         body: body,
         headers: {
             'Content-Type': 'application/json'
@@ -61,6 +62,7 @@ describe('Test receiving status updates', () => {
     const waId = `wamid.${v4()}`
     let contactUrl = ''
     before(() => {
+        cy.log(`SERVER_URL: ${SERVER_URL}`)
         cy.login('gabriel@torus-digital.com');
         cy.visit('http://localhost:3000');
         cy.get('#Gabriel-Kay').click().wait(500)
@@ -69,7 +71,7 @@ describe('Test receiving status updates', () => {
             contactUrl = url
             cy.request({
                 method: 'POST',
-                url: 'http://localhost:8000/whatsapp/message',
+                url: `${SERVER_URL}/whatsapp/message`,
                 body: {
                     whatsapp_id: waId,
                     name: "status test",

@@ -5,6 +5,7 @@ import ms from 'smtp-tester'
 
 type Device = 'desktop' | 'mobile'
 export default defineConfig({
+  projectId: "updx6u",
   chromeWebSecurity: false,
   viewportWidth: 1030,
   viewportHeight: 660,
