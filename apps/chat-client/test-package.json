@@ -24,7 +24,13 @@
     "next-auth": "4.24.5",
     "nodemailer": "latest",
     "@auth/prisma-adapter": "latest",
-    "emoji-picker-react": "latest"
+    "emoji-picker-react": "latest",
+    "node-html-parser" : "^6.1.11",
+    "formidable": "^3.5.1",
+    "form-data": "latest",
+    "axios": "latest",
+    "dotenv": "latest",
+    "uuid": "latest"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^14.0.1",
