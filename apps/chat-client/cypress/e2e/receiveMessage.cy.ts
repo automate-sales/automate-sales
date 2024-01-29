@@ -1,5 +1,6 @@
 const bucketName = `automation-media`
 const MEDIA_BASE_URL = Cypress.env('MEDIA_BASE_URL') || 'http://localhost:9000'
+const SERVER_URL = Cypress.env('SERVER_URL') || 'http://localhost:8000'
 import { v4 } from 'uuid';
 
 const getBody = (message: any) => {
@@ -39,7 +40,7 @@ const getBody = (message: any) => {
 const receiveMessage = (body: any) => {
     cy.request({
       method: 'POST',
-      url: 'http://localhost:8000/whatsapp/webhook',
+      url: `${SERVER_URL}/whatsapp/webhook`,
       body: body,
       headers: {
         'Content-Type': 'application/json'
@@ -50,9 +51,11 @@ const receiveMessage = (body: any) => {
 describe('Test receiving messages', () => {
     let contactUrl = ''
     before(() => {
+        cy.log(`SERVER_URL: ${SERVER_URL}`)
+        cy.log(`MEDIA_BASE_URL: ${MEDIA_BASE_URL}`)
         cy.login('gabriel@torus-digital.com');
-        cy.visit('http://localhost:3000').wait(1500)
-        cy.get('#Gabriel-Kay').click().wait(1500)
+        cy.visit('http://localhost:3000')
+        cy.get('#Gabriel-Kay').click().wait(500);
         cy.url().then(url => {
             cy.log('url: ', url)
             contactUrl = url

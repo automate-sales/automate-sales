@@ -46,6 +46,8 @@ services:
       MEDIA_BASE_URL: "http://minio:9000"
       WHATSAPP_BUSINESS_ID: 128414227025571
       WHATSAPP_PHONE_ID: 102033866282874
+      AWS_REGION: "us-east-1"
+      AWS_DEFAULT_REGION: "us-east-1"
     ports:
       - "8000:8000"
     depends_on:
@@ -76,10 +78,13 @@ services:
       NEXTAUTH_SECRET: secret12386
       AWS_REGION: "us-east-1"
       AWS_DEFAULT_REGION: "us-east-1"
-      MEDIA_BASE_URL: "http://minio:9000"
       EMAIL_HOST: test
       WHATSAPP_BUSINESS_ID: 128414227025571
       WHATSAPP_PHONE_ID: 102033866282874
+      SERVER_URL: "http://automation-server:8000"
+      MEDIA_BASE_URL: "http://minio:9000"
+      CYPRESS_SERVER_URL: "http://automation-server:8000"
+      CYPRESS_MEDIA_BASE_URL: "http://minio:9000"
     depends_on:
       - postgres
       - minio
