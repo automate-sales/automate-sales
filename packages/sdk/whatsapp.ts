@@ -257,8 +257,8 @@ export async function sendMessage(
         media = await convertWebmToOgg(media)
         console.log('CONVERTED MEDIA FILE: ', media)
         } 
-        const mediaId = media ? await uploadToWhatsAppMediaAPI(media) : null
-        //console.log('MEDIA ID: ', mediaId)
+        const mediaId = process.env.NODE_ENV !== 'test' ? media ? await uploadToWhatsAppMediaAPI(media) : null : null
+        console.log('MEDIA ID: ', mediaId)
         const fileName = media?.originalFilename || media?.mimetype ? `${media?.newFilename}.${media?.mimetype?.split('/')[1]}` : media?.newFilename
         const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_ID}/messages`
         const messageType = template ? 'template' : getTypeFromMime(media?.mimetype)

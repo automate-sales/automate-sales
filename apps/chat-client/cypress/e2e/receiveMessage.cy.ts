@@ -54,15 +54,16 @@ describe('Test receiving messages', () => {
         cy.log(`SERVER_URL: ${SERVER_URL}`)
         cy.log(`MEDIA_BASE_URL: ${MEDIA_BASE_URL}`)
         cy.login('gabriel@torus-digital.com');
-        cy.visit('http://localhost:3000')
-        cy.get('#Gabriel-Kay').click().wait(500);
+        /* cy.visit('http://localhost:3000')
+        cy.get('#Gabriel-Kay').click().wait(500).click().wait(500);
         cy.url().then(url => {
-            cy.log('url: ', url)
+            cy.log('URL: ', url)
             contactUrl = url
-         });
+         }); */
     });
     beforeEach(() => {
-        cy.visit(contactUrl);
+        cy.visit('http://localhost:3000')
+        cy.get('#Gabriel-Kay').click().wait(500);
     });
     describe('receive a text message', () => {
         const text = "Buenas que tal";
