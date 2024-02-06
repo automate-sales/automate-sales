@@ -1,0 +1,11 @@
+name: Tests
+on: [push]
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/automation'
+    steps:
+      - uses: actions/checkout@v2
+      - run: ./test.sh
