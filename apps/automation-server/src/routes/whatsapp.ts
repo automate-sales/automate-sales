@@ -14,6 +14,7 @@ import { createReceivedChat, createSentChat, setRespondedChats, updateChat, upda
 import { Server as SocketIOServer } from 'socket.io';
 
 import formidable from 'formidable';
+import { ChatItem } from 'database';
 
 export default function(io: SocketIOServer){
     const router: Router = Router();
@@ -44,7 +45,7 @@ export default function(io: SocketIOServer){
     router.post("/webhook", async (req, res) => {
         const body = req.body as WhatsappWebhook;
         logger.info('whatsapp webhook received')
-        try{
+        try {
             // VALIDATE WEBHOOK
             const rawBody = (req as SpecialRequest).rawBody;
             const signature = req.headers['x-hub-signature']
@@ -62,7 +63,7 @@ export default function(io: SocketIOServer){
                         if(value.messages){
                             const wa_contact = value.contacts[0]
                             for(let message of value.messages){
-                                let obj = await parseMessage(message)
+                                let obj = await parseMessage(message) as ChatItem
                                 obj.status = 'received'
                                 //logger.info(obj, 'OBJECT: ')
                                 // lead = get or create lead
@@ -76,11 +77,12 @@ export default function(io: SocketIOServer){
                                     // must have test version
                                     const mediaUrl = process.env.NODE_ENV == 'test' ? media.url : null
                                     const mediaRes = await getFromWhatsappMediaAPI(media.id, mediaUrl)
-                                    //logger.info(mediaRes, 'media response \n MEDIA RESPONSE')
+                                    logger.info(mediaRes, 'media response \n MEDIA RESPONSE')
                                     const arrayBuffer = await downloadFileAsArrayBuffer(mediaRes.url)
-                                    //logger.info(arrayBuffer, 'ARRAY BUFFER')
+                                    logger.info('ARRAY BUFFER')
                                     const fileName = message.document?.filename || `${generateMediaId()}.${media.mime_type.split('/')[1]}`
                                     const key = `media/chats/${chat.id}/${fileName}`
+                                    console.log('\n\n KEY ', key, '\n\n')
                                     const s3Url = await uploadFileToS3(arrayBuffer, key);
                                     const obj = {
                                         media: s3Url,
@@ -229,11 +231,11 @@ export default function(io: SocketIOServer){
                 chat = await updateChat(chat.id, obj)
                 //logger.info(res, 'chat updated with media')
             }
-            const phoneNumber = chat.contact.whatsapp_id
+            const phoneNumber = chat.contact.source_id
             //logger.info(template, 'template objECT')
             const whatsappMessage = await sendMessage(phoneNumber, chat.text, media, template)
             //logger.info(whatsappMessage, 'whatsapp message!!!')
-            chat = await updateChat(chat.id, { whatsapp_id: reqType == 'json' ? obj.whatsapp_id : whatsappMessage.messages[0].id, status: 'pending' })
+            chat = await updateChat(chat.id, { source_id: reqType == 'json' ? obj.source_id : whatsappMessage.messages[0].id, status: 'pending' })
             await updateContact(chat.contact_id, { last_chat_date: chat.chatDate, last_chat_text: chat.text })
             io.emit('new_message', chat)
             

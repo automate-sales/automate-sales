@@ -4,7 +4,7 @@ dotenv.config();
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { createPublicBucket, uploadImageToS3, wipeS3Bucket } from "sdk/s3";
 import {contacts, chats} from "test-data";
-import { Chat, ChatStatus, ChatType, Direction, PrismaClient } from '@prisma/client'
+import { Chat, ChatSource, ChatStatus, ChatType, ContactSource, Direction, PrismaClient } from '@prisma/client'
 import { v4 } from 'uuid';
 import path from 'path'
 import { getLinkProps, normalizeName, normalizePhoneNumber } from 'sdk/utils';
@@ -40,10 +40,11 @@ async function seedContacts() {
     let newContact = {
       ...contact,
       id: contactId,
-      whatsapp_id: contact.phone_number,
+      contact_source: 'whatsapp' as ContactSource,
+      source_id: contact.phone_number,
+      source_name: contact.name,
       name: contact.name ? normalizeName(contact.name) : contact.phone_number,
       phone_number: phoneNumberObj?.e164Format,
-      whatsapp_name: contact.name,
       last_chat_date: cocoaToDate(contact.last_chat_date)
     }
     if(contact.profile_picture && existsSync(contact.profile_picture)){
@@ -85,6 +86,7 @@ async function seedChats() {
       } = chat
       let newChat = {
         ...validProps,
+        chat_source: 'whatsapp' as ChatSource,
         name: `new ${chat.type}`,
         contact_id: contact.id,
         phone_number: phoneNumberObj?.e164Format,

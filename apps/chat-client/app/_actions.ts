@@ -14,7 +14,7 @@ export async function searchAction(queryString: string) {
               },
             },
             {
-              whatsapp_name: {
+              source_name: {
                 contains: queryString,
                 mode: 'insensitive',
               },

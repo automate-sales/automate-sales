@@ -1,27 +1,29 @@
-import { Chat, Prisma, PrismaClient } from "database"
-import type { ChatItem, ChatObject, WhatsappContact } from "sdk/types"
+import { Prisma, PrismaClient, ChatItem, ChatSource } from "database"
+import type { WhatsappContact } from "sdk/types"
 import { normalizePhoneNumber } from "sdk/utils"
 const prisma = new PrismaClient()
 
 
-const contactObject = (contact: WhatsappContact)=> {
+const contactObject = (contact: WhatsappContact, source: ChatSource)=> {
     const name = contact.profile.name || contact.wa_id
-    const whatsapp_id = contact.wa_id
-    const PhoneNumberObj = normalizePhoneNumber(whatsapp_id)
-    const phone_number = PhoneNumberObj?.e164Format || whatsapp_id
+    const source_id = contact.wa_id
+    const PhoneNumberObj = normalizePhoneNumber(source_id)
+    const phone_number = PhoneNumberObj?.e164Format || source_id
     const country = PhoneNumberObj?.countryName || null
     return {
-        whatsapp_id,
+        source_id,
         name,
         phone_number,
-        country
+        country,
+        contact_source: source,
+        source_name: name
     }
 }
 
 export const getOrCreateContact = async(contact: WhatsappContact, chatDate: Date)=> {
-    const whatsapp_id = contact.wa_id
+    const source_id = contact.wa_id
     const res = await prisma.contact.upsert({
-        where: { whatsapp_id },
+        where: { source_id },
         update: { last_chat_date: chatDate },
         create: {
             ...contactObject(contact),
@@ -32,7 +34,7 @@ export const getOrCreateContact = async(contact: WhatsappContact, chatDate: Date
 }
 
 export const createReceivedChat = async(chat: ChatItem, contact: WhatsappContact)=> {
-    const whatsapp_id = contact.wa_id
+    const source_id = contact.wa_id
     const result = await prisma.$transaction(async (prisma) => {
         // Create or connect the contact and create the chat
         const newChat = await prisma.chat.create({
@@ -40,9 +42,9 @@ export const createReceivedChat = async(chat: ChatItem, contact: WhatsappContact
                 ...chat,
                 contact: {
                     connectOrCreate: {
-                        where: { whatsapp_id },
+                        where: { source_id },
                         create: {
-                            ...contactObject(contact),
+                            ...contactObject(contact, chat.chat_source),
                             last_chat_date: chat.chatDate,
                         }
                     },
@@ -102,7 +104,7 @@ export const updateContact = async(contactId: string, fields: { [key: string]: a
 
 export const updateChatByWaId = async(waId: string, fields: { [key: string]: any })=> {
     return await prisma.chat.update({
-        where: { whatsapp_id: waId },
+        where: { source_id: waId },
         data: fields as Prisma.ChatUpdateInput,
         include: { contact: true },
     })
@@ -110,7 +112,7 @@ export const updateChatByWaId = async(waId: string, fields: { [key: string]: any
 
 export const updateChatStatus = async(waId: string, status: string)=> {
     const currentChat = await prisma.chat.findUnique({
-        where: { whatsapp_id: waId },
+        where: { source_id: waId },
         include: { contact: true }
     });
     console.log('CURRENT CHAT!!!: ', currentChat?.status)

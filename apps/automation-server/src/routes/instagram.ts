@@ -3,30 +3,39 @@ dotenv.config();
 
 import logger from '../../logger';
 import { Router, Request } from 'express';
-import { validateMetaSignature } from 'sdk/whatsapp';
-import { getUserProfile, handleMessage } from 'sdk/instagram';
+import { downloadFileAsArrayBuffer, validateMetaSignature } from 'sdk/whatsapp';
+import { getUserProfile, handleMessage, parseMessage } from 'sdk/instagram';
 import { Server as SocketIOServer } from 'socket.io';
+import { createReceivedChat, updateChat } from '../utils/prisma';
+import { uploadFileToS3 } from 'sdk/s3';
 
+
+const mediaTypes = [
+    'image',
+    'video',
+    'audio',
+    'file'
+]
 
 export default function(io: SocketIOServer){
     const router: Router = Router();
 
     type SpecialRequest = Request & { rawBody: string }
 
-    // Verify a whatsapp webhook
+    // Verify a instagram webhook
     router.get("/webhook", (req, res) => {
-        logger.info(req, 'whatsapp verify webhook request')
-        const verify_token = process.env.WHATSAPP_VERIFY_TOKEN;
+        logger.info(req, 'instagram verify webhook request')
+        const verify_token = process.env.instagram_VERIFY_TOKEN;
         const mode = req.query["hub.mode"];
         const token = req.query["hub.verify_token"];
         const challenge = req.query["hub.challenge"];
         // Check if a token and mode were sent
         if (mode && token) {
             if (mode === "subscribe" && token === verify_token) {
-                logger.info('Whatsapp webhook verified succesfully')
+                logger.info('instagram webhook verified succesfully')
                 return res.status(200).send(challenge);
             } else {
-                logger.fatal('Failed to verify whatsapp webhook')
+                logger.fatal('Failed to verify instagram webhook')
                 return res.sendStatus(403);
             }
         } else return res.status(200).json({ error: "Invalid verification request" });
@@ -34,72 +43,70 @@ export default function(io: SocketIOServer){
 
     // recieves an instagram message webhook event
     router.post("/webhook", async (req, res) => {
-        var users = {} as { [key: string]: any }
         const body = req.body;
-        logger.info('whatsapp webhook received')
+        logger.info(body, 'instagram webhook received ')
+        console.log('WEBHOOK BODY ', body)
         try {
             // VALIDATE WEBHOOK
             const rawBody = (req as SpecialRequest).rawBody;
             const signature = req.headers['x-hub-signature']
             if(process.env.NODE_ENV != 'test' && !validateMetaSignature(rawBody, String(signature))) return res.status(200).send('Unauthorized');
-            // Check if this is an event from a page subscription
-            if (body.object && body.object === "instagram") {
-                body.entry.forEach(async function(entry:any) {
-                // Handle Page Changes event
-                    if ("changes" in entry) {
-                        //let receiveMessage = new Receive();
-                        if (entry.changes[0].field === "comments") {
-                            let change = entry.changes[0].value;
-                            if (entry.changes[0].value) console.log("Got a comments event");
-                            //return receiveMessage.handlePrivateReply("comment_id", change.id);
-                            console.log("comment_id", change.id)
+            if (!body.object || body.object !== "instagram") return res.status(200).send('Incorrect format. This endpoint expects an instagram webhook event');
+
+            body.entry.forEach(async function(entry:any) {
+            // Handle Page Changes event
+                if ("changes" in entry) {
+                    if (entry.changes[0].field === "comments") {
+                        let change = entry.changes[0].value;
+                        if (entry.changes[0].value) console.log("Got a comments event");
+                        //return receiveMessage.handlePrivateReply("comment_id", change.id);
+                        console.log("comment_id", change.id)
+                    }
+                }
+
+                if (!("messaging" in entry)) {
+                    console.warn("No messaging field in entry. Possibly a webhook test.");
+                    return;
+                }
+                // Iterate over webhook events - there may be multiple
+                entry.messaging.forEach(async function(webhookEvent:any) {
+                    let senderIgsid = webhookEvent.sender.id;
+                    let user = { source_id: senderIgsid } as { [key: string]: any }
+                    // users = getUsersByIgsid(senderIgsid);
+                    var users = null as { [key: string]: any } | null;
+                    if (!users) {
+                        let userProfile = await getUserProfile(senderIgsid);
+                        if (userProfile) {
+                            user.name = userProfile.username
+                            user.source_name = userProfile.username
                         }
                     }
-
-                    if (!("messaging" in entry)) {
-                        console.warn("No messaging field in entry. Possibly a webhook test.");
-                        return;
+                    console.log('USER PROFILE ', user)
+                    let obj = await parseMessage(webhookEvent);
+                    logger.info(obj, 'EMITTING NEW MESSAGE')
+                    let chat = await createReceivedChat(obj, { wa_id: user.source_id, profile: {name: user.name } });
+                    
+                    if(obj.type && mediaTypes.includes(obj.type)){
+                        const arrayBuffer = await downloadFileAsArrayBuffer(obj.text)
+                        const fileName = obj.name
+                        const key = `media/chats/${chat.id}/${fileName}`
+                        const s3Url = await uploadFileToS3(arrayBuffer, key);
+                        const newObj = {
+                            media: s3Url,
+                            name: fileName,
+                            text: fileName
+                        }
+                        chat = await updateChat(chat.id, newObj)
                     }
-                    // Iterate over webhook events - there may be multiple
-                    entry.messaging.forEach(async function(webhookEvent:any) {
-                        // Discard uninteresting events
-                        if ("message" in webhookEvent && webhookEvent.message.is_echo === true) {
-                            console.log("Got an echo");
-                            return;
-                        }
+                    
+                    logger.info(chat, 'CHAT CREATED')
+                    //io.emit('new_message', chat)
 
-                        // Get the sender IGSID
-                        let senderIgsid = webhookEvent.sender.id;
-                        let user = {
-                            igsid: senderIgsid,
-                            name: "",
-                            profilePic: ""
-                        }
-
-                        if (!(senderIgsid in users)) {
-                        // First time seeing this user
-                            let userProfile = await getUserProfile(senderIgsid);
-                            if (userProfile) {
-                                user.name = userProfile.name;
-                                user.profilePic = userProfile.profilePic;
-                                users[senderIgsid] = user;
-                                console.log(`Created new user profile`);
-                                console.dir(user);
-                            }
-                        }
-
-                        const msg = handleMessage(user, webhookEvent)
-                        console.log(msg, 'IG MESSAGE')
-                        return msg;
-                    });
+                    console.log(obj, 'IG MESSAGE')
+                    return obj;
                 });
-            } else {
-                // Return a '404 Not Found' if event is not recognized
-                console.warn(`Unrecognized POST to webhook.`);
-                res.sendStatus(404);
-            }
-
-
+            });
+           
             return res.status(200).send('Message recieved')
         
         } catch(err){
@@ -113,7 +120,7 @@ export default function(io: SocketIOServer){
     });
 
 
-    // sends a message through whatsapp business
+    // sends a message through instagram business
     router.post("/message", async (req, res, next) => {
         console.log('MESSAGE ENDPOINT TRIGERRED ')
         /* try{
@@ -162,7 +169,7 @@ export default function(io: SocketIOServer){
                 chat = await updateChat(chat.id, obj)
                 //logger.info(res, 'chat updated with media')
             }
-            const phoneNumber = chat.contact.whatsapp_id
+            const phoneNumber = chat.contact.instagram_id
             
             
             //logger.info(template, 'template objECT')
@@ -170,8 +177,8 @@ export default function(io: SocketIOServer){
             
             
             
-            //logger.info(igMessage, 'whatsapp message!!!')
-            chat = await updateChat(chat.id, { whatsapp_id: reqType == 'json' ? obj.whatsapp_id : igMessage.messages[0].id, status: 'pending' })
+            //logger.info(igMessage, 'instagram message!!!')
+            chat = await updateChat(chat.id, { instagram_id: reqType == 'json' ? obj.instagram_id : igMessage.messages[0].id, status: 'pending' })
             await updateContact(chat.contact_id, { last_chat_date: chat.chatDate, last_chat_text: chat.text })
             io.emit('new_message', chat)
             

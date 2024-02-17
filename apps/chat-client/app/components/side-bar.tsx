@@ -22,7 +22,7 @@ export async function SideBar({params, searchParams}: {params: any, searchParams
           },
         },
         {
-          whatsapp_name: {
+          source_name: {
             contains: query,
             mode: 'insensitive',
           },

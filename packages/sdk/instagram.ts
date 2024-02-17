@@ -1,4 +1,7 @@
 import dotenv from 'dotenv';
+import { getLinkProps, isLink } from './utils';
+import { ChatItem } from './types';
+import { secondsToDate } from './whatsapp';
 dotenv.config();
 
 /* import { ChatItem, InstagramMessageResponse, InstagramMediaResponse, InstagramMessage } from './types';
@@ -60,183 +63,76 @@ export const getUserProfile = async (senderIgsid: string)=> {
     if (config.pageAccesToken) {
         url.search = new URLSearchParams({
           access_token: config.pageAccesToken,
-          fields: "name,profile_pic"
+          fields: "id,username"
         }).toString()
     }
-    let response = await fetch(url);
-    if (response.ok) {
-      let userProfile = await response.json();
-      console.log(`User profile: ${userProfile}`);
-      return {
-        name: userProfile.name,
-        profilePic: userProfile.profile_pic
-      };
-    } else {
-      console.warn(
-        `Could not load profile for ${senderIgsid}: ${response.statusText}`
-      );
-      return null;
+    if(process.env.NODE_ENV == 'test') return {
+        id: '1234',
+        username: 'testuser'
     }
-}
-
-const handleTextMessage =(user: any, event: any)=> {
-    console.log(
-      `Received text from user '${user.name}' (${user.igsid}):\n`,
-      event.message.text
-    );
-    let message = event.message.text.trim().toLowerCase();
-    console.log("Received message:", message);
-    let response;
-    return response;
-}
-
-// Handle mesage events with attachments
-const handleAttachmentMessage =(user: any, event:any)=> {
-    let response;
-
-    // Get the attachment
-    let attachment = event.message.attachments[0];
-    console.log("Received attachment:", `${attachment} for ${user.igsid}`);
-
-    return response;
-}
-
-const handleQuickReply =(user: any, event:any)=> {
-    // Get the payload of the quick reply
-    let response;
-    let quickReply = event.message.quick_reply.payload;
-    console.log("Received quick reply:", `${quickReply} for ${user.igsid}`);
-    return response;
-}
-
-const handlePostback =(user: any, event:any)=> {
-    let postback = event.postback;
-    let response;
-    // Check for the special Get Starded with referral
-    let payload;
-    if (postback.referral && postback.referral.type == "OPEN_THREAD") {
-      payload = postback.referral.ref;
-    } else {
-      // Get the payload of the postback
-      payload = postback.payload;
-    }
-    console.log("Received postback:", `${payload} for ${user.igsid}`);
-    return response
-  }
-
-  // Handles referral events
-  const handleReferral =(user:any, event:any)=> {
-    // Get the payload of the postback
-    let payload = event.referral.ref.toUpperCase();
-    let response;
-    console.log("Received referral:", `${payload} for ${user.igsid}`);
-    return response;
-  }
-
-export const handleMessage =(user:any, event: any)=> {
-
-    let responses;
-
-    try {
-      if (event.message) {
-        let message = event.message;
-
-        if (message.is_echo) {
-          return;
-        } else if (message.quick_reply) {
-          responses = handleQuickReply(user, event);
-        } else if (message.attachments) {
-          responses = handleAttachmentMessage(user, event);
-        } else if (message.text) {
-          responses = handleTextMessage(user, event);
+    else {
+        let response = await fetch(url);
+        if (response.ok) {
+        let userProfile = await response.json();
+        console.log(`User profile: ${userProfile}`);
+        return {
+            name: userProfile.name,
+            profilePic: userProfile.profile_pic
+        };
+        } else {
+        console.warn(
+            `Could not load profile for ${senderIgsid}: ${response.statusText}`
+        );
+        return null;
         }
-      } else if (event.postback) {
-        responses = handlePostback(user, event);
-      } else if (event.referral) {
-        responses = handleReferral(user, event);
-      }
-    } catch (error) {
-      console.error(error);
-      responses = {
-        text: `An error has occured: '${error}'. We have been notified and \
-        will fix the issue shortly!`
-      };
     }
+}
 
-    if (!responses) {
-      return;
-    }
-
-    /* if (Array.isArray(responses)) {
-      let delay = 0;
-      for (let response of responses) {
-        this.sendMessage(response, delay * 2000);
-        delay++;
-      }
-    } else {
-      this.sendMessage(responses);
-    } */
-  }
-
-/* export const parseMessage = async (message: WhatsappMessage): Promise<ChatItem> => {
+export const parseMessage = async (event: any): Promise<any> => {
+    const message = event.message
     console.log('parsing message')
-    let chat = {} as ChatItem
-    if(message && message[message.type]){
-        chat.type = message.type
-        chat.whatsapp_id = message.id
-        chat.direction = 'incoming'
-        chat.chatDate = secondsToDate(message.timestamp)
-        switch (message.type) {
-            case 'text':
-                const body = message.text?.body? message.text.body : null
-                if(!body) throw new Error('No body found in text message')
-                chat.text = body
-                chat.name = body.substring(0, 24)
-                const link = isLink(body)
-                if(link){
-                    const linkProps = await getLinkProps(link)
-                    chat.type = 'link'
-                    chat.link = linkProps
-                }
-                return chat;
-            case 'contacts':
-                const contact = message.contacts ? message.contacts[0] : null
-                if(!contact) throw new Error('No contact found in contacts message')
-                const contactName = contact.name.formatted_name || contact.name.first_name
-                const contactPhone = contact.phones[0].phone 
-                const phoneNumberObj = normalizePhoneNumber(contactPhone)
-                chat.contact_object = {
-                    name: contactName,
-                    phone: phoneNumberObj?.e164Format,
-                    countryShortName: phoneNumberObj?.countryCode
-                }
-                chat.text = `${contactName} ${contactPhone}`
-                chat.name = `contact: ${contactName}`
-                return chat;
-            case 'location':
-                chat.location = message.location
-                chat.text = message.location?.address
-                chat.name = `location: ${message.location?.name}`
-                return chat;
-            case 'audio':
-                return {...chat, ...parseMediaChat(message)}
-            case 'image':
-                return {...chat, ...parseMediaChat(message)}
-            case 'video':
-                return {...chat, ...parseMediaChat(message)}
-            case 'document':
-                return {...chat, ...parseMediaChat(message)}
-            case 'sticker':
-                return {...chat, ...parseMediaChat(message)}
-            default:
-                throw new Error(`Unrecognized message type: ${message.type}`)
-        } 
-    } else throw new Error(`Message type not found: ${message.type}`)
+    let chat = {
+        direction: 'incoming',
+        status: 'received',
+        type: 'text',
+        chat_source: 'instagram',
+        source_id: message.mid,
+        chatDate: secondsToDate(event.timestamp),
+        name: message.text? message.text.substring(0, 24) : '',
+        text: message.text? message.text : ''
+    } as ChatItem
+    if (message.is_echo) {
+        return null
+    } 
+    else if (message.attachments) {
+        const mediaUrl = message.attachments[0].payload.url
+        const type = message.attachments[0].type
+        chat.type = type === 'file' ? 'document' : type
+        chat.name = mediaUrl.substring(mediaUrl.lastIndexOf('/') + 1)
+        chat.text = mediaUrl
+        chat.media = mediaUrl
+    } 
+    else if (message.reply_to) {
+        chat.type = 'reply'
+    }
+    else if (message.quick_reply) {
+        chat.type = 'quick_reply'
+    }
+    else if (message.text) {
+        const link = isLink(message.text)
+        if(link){
+            const linkProps = await getLinkProps(link)
+            chat.type = 'link'
+            chat.link = linkProps
+        }
+    }
+    console.log('PARSED MESSAGE: ', chat)
+    return chat;
 }
 
 
 
-export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
+/* export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
     console.log('generating message ', fields, files)
     const messageType = fields?.type?.length > 0 ? fields.type[0] : null as string | null
     if(!messageType) throw new Error('No message type found in form data')
