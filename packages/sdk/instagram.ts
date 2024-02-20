@@ -1,14 +1,16 @@
 import dotenv from 'dotenv';
 import { getLinkProps, isLink } from './utils';
-import { ChatItem } from './types';
+import { ChatItem, ChatObject } from './types';
 import { secondsToDate } from './whatsapp';
 dotenv.config();
+import { v4 } from 'uuid';
+import { convertWebmToOgg } from './media';
+import { getTypeFromMime } from './s3';
 
-/* import { ChatItem, InstagramMessageResponse, InstagramMediaResponse, InstagramMessage } from './types';
 import axios from 'axios';
 import { File } from 'formidable';
 import { createReadStream } from 'fs';
-import FormData from 'form-data'; */
+import FormData from 'form-data';
 
 const ENV_VARS = [
     "PAGE_ID",
@@ -26,7 +28,7 @@ export const config = {
     // Page and Application information
     pageId: process.env.IG_PAGE_ID,
     appId: process.env.META_APP_ID,
-    pageAccesToken: process.env.IG_ACCESS_TOKEN,
+    pageAccesToken: process.env.IG_ACCESS_TOKEN || '',
     appSecret: process.env.META_APP_SECRET,
     verifyToken: process.env.WHATSAPP_VERIFY_TOKEN,
   
@@ -132,13 +134,14 @@ export const parseMessage = async (event: any): Promise<any> => {
 
 
 
-/* export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
+export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
     console.log('generating message ', fields, files)
     const messageType = fields?.type?.length > 0 ? fields.type[0] : null as string | null
     if(!messageType) throw new Error('No message type found in form data')
     let chat = {
         type: messageType,
         direction: 'outgoing',
+        chat_source: 'instagram',
         chatDate: new Date()
     } as ChatObject
 
@@ -156,32 +159,8 @@ export const parseMessage = async (event: any): Promise<any> => {
                 chat.link = { url: link }
             }
             return chat;
-        case 'contacts':
-            const contact = fields.contact as string
-            if(!contact) throw new Error('No contact found in contacts message')
-            const contactObj = JSON.parse(contact)
-            chat.contact_object = contactObj
-            console.log(contactObj)
-            return chat;
-        case 'location':
-            const location = fields.location as string
-            if(!location) throw new Error('No location found in location message')
-            const locationObj = JSON.parse(location)
-            chat.location = locationObj
-            return chat;
         case 'media':
             chat.media = files.file[0] as File | null
-            return chat;
-        case 'template':
-            const templateName = fields.template[0] as string
-            if(!templateName) throw new Error('No template found in template message')
-            chat.text = text
-            chat.name = templateName
-            chat.template = {
-                name: templateName,
-                params: extractParams(text || ''),
-                language: 'es'
-            }
             return chat;
         default:
             throw new Error(`Unrecognized message type: ${messageType}`)
@@ -189,29 +168,60 @@ export const parseMessage = async (event: any): Promise<any> => {
 }
 
 
+export async function uploadToMetaMediaAPI(file: File) {
+    console.log('UPLOADING TO WHATSAPP MEDIA API ', file)
+    const fileStream = createReadStream(file.filepath);
+    const fileName = file.originalFilename || file.mimetype ? `${file.newFilename}.${file.mimetype?.split('/')[1]}` : file.newFilename
+    const formData = new FormData();
+    const fileType = getTypeFromMime(file.mimetype)
+    formData.append('platform', 'instagram');
+    formData.append('message', JSON.stringify({
+        attachment: {
+            type: fileType,
+            is_reusable: true
+        }
+    }));
+    // Ensure that the file path and type are correctly specified
+    formData.append('filedata', fileStream, fileName);
+    formData.append('access_token', config.pageAccesToken);
+
+    try {
+        const mediaResponse = await axios.post(
+            `https://graph.facebook.com/${config.apiVersion}/${config.pageId}/message_attachments`,
+            formData
+        );
+        console.log('RESPONSE !!!!: ', mediaResponse)
+        if(mediaResponse.status !== 200) {
+            throw new Error(`Error uploading to the whatsapp media API: ${mediaResponse.statusText}`)
+        }
+        if (!mediaResponse.data.attachment_id) throw new Error('Failed to upload the PDF to WhatsApp Media API');
+        return mediaResponse.data.attachment_id;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.error('Error response data:', error.response?.data);
+        }
+        throw error;
+    }
+    
+}
+
 export const sendMessage = async (
     recipientId: string, // Instagram User ID for the recipient of the message
     message: string | null = null, // Text body of the message
     media?: null| File, // id of the whatsapp media object
     quickReplyOptions: string[] | null = null // Optional quick reply options for the message
-): Promise<InstagramMessageResponse> => {
+): Promise<any> => {
     if (!recipientId || (!message && !media)) throw new Error('Must provide a recipient ID and a message or media ID');
     if(process.env.NODE_ENV == 'test') return {
-        messaging_product: 'whatsapp',
-        contacts: [{
-            input: '50767474627',
-            wa_id: '50767474627',
-        }],
-        messages: [{
-            id: `wamid.${v4()}`
-        }]
-    } 
+        "recipient_id": "1234",
+        "message_id": `m_${v4()}`
+    }
     else {
         if(media && media.mimetype?.startsWith('audio/webm')) {
             media = await convertWebmToOgg(media)
             console.log('CONVERTED MEDIA FILE: ', media)
         }
-        const mediaId = process.env.NODE_ENV !== 'test' ? media ? await uploadToWhatsAppMediaAPI(media) : null : null
+        const mediaId = process.env.NODE_ENV !== 'test' ? media ? await uploadToMetaMediaAPI(media) : null : null
         console.log('MEDIA ID: ', mediaId)
         const fileName = media?.originalFilename || media?.mimetype ? `${media?.newFilename}.${media?.mimetype?.split('/')[1]}` : media?.newFilename
         
@@ -225,16 +235,16 @@ export const sendMessage = async (
         }
 
         if (mediaId) {
-            data.message = { attachment: { type: 'image', payload: { attachment_id: mediaId } } }; // Example for image, adjust accordingly for video
+            data.message = { attachment: { type: 'MEDIA_SHARE', payload: { attachment_id: mediaId } } }; // Example for image, adjust accordingly for video
         }
 
-        if (quickReplyOptions) {
+        /* if (quickReplyOptions) {
             data.message.quick_replies = quickReplyOptions.map(option => ({
                 content_type: 'text',
                 title: option,
                 payload: option.toUpperCase(),
             }));
-        }
+        } */
 
         const url = `https://graph.facebook.com/v13.0/me/messages?access_token=${process.env.INSTAGRAM_PAGE_ACCESS_TOKEN}`;
         
@@ -262,4 +272,4 @@ export const uploadMedia = async (file: File): Promise<string> => {
         console.error('Failed to upload media:', error);
         throw new Error('Failed to upload media to Instagram');
     }
-}; */
+};

@@ -176,3 +176,12 @@ export const setSeenByChats = async (agent: string, contact_id: string) => {
     });
     return Promise.all(updatePromises);
 }
+
+
+export const getSourceId = async(contactId: string)=> {
+    const res = await prisma.contact.findUnique({
+        where: { id: contactId },
+        select: { source_id: true }
+    })
+    return res?.source_id || ''
+}

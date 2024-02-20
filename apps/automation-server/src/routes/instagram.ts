@@ -4,10 +4,12 @@ dotenv.config();
 import logger from '../../logger';
 import { Router, Request } from 'express';
 import { downloadFileAsArrayBuffer, validateMetaSignature } from 'sdk/whatsapp';
-import { getUserProfile, handleMessage, parseMessage } from 'sdk/instagram';
+import { generateMessage, getUserProfile, parseMessage, sendMessage } from 'sdk/instagram';
 import { Server as SocketIOServer } from 'socket.io';
-import { createReceivedChat, updateChat } from '../utils/prisma';
-import { uploadFileToS3 } from 'sdk/s3';
+import { createReceivedChat, createSentChat, getSourceId, setRespondedChats, updateChat, updateContact } from '../utils/prisma';
+import { getTypeFromMime, uploadFileToS3 } from 'sdk/s3';
+import formidable from 'formidable';
+import { getMondayDateTime, mondayCreateItem } from 'sdk/monday';
 
 
 const mediaTypes = [
@@ -120,10 +122,23 @@ export default function(io: SocketIOServer){
     });
 
 
+    const formPromise = (req: Request): Promise<{ fields: formidable.Fields<string>, files: formidable.Files<string> }> => {
+        return new Promise((resolve, reject) => {
+            const form = formidable({
+                allowEmptyFiles: true,
+                minFileSize: 0
+            })
+            form.parse(req, (err, fields, files) => {
+                if (err) reject(err)
+                resolve({ fields, files })
+            })
+        })
+    }
+
     // sends a message through instagram business
     router.post("/message", async (req, res, next) => {
         console.log('MESSAGE ENDPOINT TRIGERRED ')
-        /* try{
+        try{
             let reqType, fields, files, contactId, obj, agent;
             if (req.headers['content-type'] === 'application/json') {
                 reqType = 'json';
@@ -169,16 +184,14 @@ export default function(io: SocketIOServer){
                 chat = await updateChat(chat.id, obj)
                 //logger.info(res, 'chat updated with media')
             }
-            const phoneNumber = chat.contact.instagram_id
-            
             
             //logger.info(template, 'template objECT')
-            const igMessage = await sendMessage(phoneNumber, chat.text, media, template)
-            
+            const recipient_id = await getSourceId(contactId)
+            const igMessage = await sendMessage(recipient_id, chat.text, media)
             
             
             //logger.info(igMessage, 'instagram message!!!')
-            chat = await updateChat(chat.id, { instagram_id: reqType == 'json' ? obj.instagram_id : igMessage.messages[0].id, status: 'pending' })
+            chat = await updateChat(chat.id, { source_id: reqType == 'json' ? obj.source_id : igMessage.messages[0].id, status: 'pending' })
             await updateContact(chat.contact_id, { last_chat_date: chat.chatDate, last_chat_text: chat.text })
             io.emit('new_message', chat)
             
@@ -209,7 +222,7 @@ export default function(io: SocketIOServer){
             `Unknown error: ${err}`
             logger.error(errorMessage)
             return res.status(500).send(errorMessage)
-        } */
+        }
     })
     return router
 }

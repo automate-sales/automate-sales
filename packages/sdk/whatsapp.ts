@@ -187,6 +187,7 @@ export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
     let chat = {
         type: messageType,
         direction: 'outgoing',
+        chat_source: 'whatsapp',
         chatDate: new Date()
     } as ChatObject
 
