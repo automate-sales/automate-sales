@@ -1,4 +1,3 @@
-import { v4 } from 'uuid';
 const SERVER_URL = Cypress.env('SERVER_URL') || 'http://localhost:8000'
 
 const getStatusBody = (
@@ -59,7 +58,7 @@ const receiveStatus = async (body: any) => {
 
 describe('Test receiving status updates', () => {
     const text = "status update test"
-    const waId = `wamid.${v4()}`
+    const waId = `wamid.${Cypress._.random(0, 1e6)}`; 
     let contactUrl = ''
     before(() => {
         cy.log(`SERVER_URL: ${SERVER_URL}`)

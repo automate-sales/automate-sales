@@ -21,22 +21,10 @@ services:
       - "9000:9000"
       - "9001:9001"
 
-  ngrok:
-    image: ngrok/ngrok:latest
-    restart: unless-stopped
-    command:
-      - "start"
-      - "--all"
-      - "--config"
-      - "/etc/ngrok.yml"
-    volumes:
-      - ./ngrok.yml:/etc/ngrok.yml
-    ports:
-      - 4040:4040
-
   automation-server:
     build:
-      dockerfile: ./apps/automation-server/Dockerfile
+      context: .
+      dockerfile: apps/automation-server/Dockerfile
     environment:
       NODE_ENV: test
       DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/automation"
@@ -57,7 +45,8 @@ services:
 
   chat-client:
     build:
-      dockerfile: ./apps/chat-client/Dockerfile
+      context: .
+      dockerfile: apps/chat-client/Dockerfile
     command:
       - sh 
       - -c
