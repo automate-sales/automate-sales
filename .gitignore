@@ -34,3 +34,5 @@ yarn-error.log*
 
 # vscode
 .vscode
+
+temp_optional_files/
