@@ -4,7 +4,7 @@ dotenv.config();
 import logger from '../../logger';
 import { Router, Request } from 'express';
 import { analyzeSentiment, extractDemographicData } from 'sdk/openai';
-import { getMondayDateTime, mondayCreateItem } from 'sdk/monday';
+import { convertToMondayColumnValues, createOrUpdateContact, getMondayDateTime, mondayCreateItem } from 'sdk/monday';
 
 import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
 import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
@@ -14,6 +14,8 @@ import { createReceivedChat, createSentChat, setRespondedChats, updateChat, upda
 import { Server as SocketIOServer } from 'socket.io';
 
 import formidable from 'formidable';
+
+import chatBoard from 'sdk/mondayBoardDefinitions/chat'
 
 export default function(io: SocketIOServer){
     const router: Router = Router();
@@ -110,18 +112,13 @@ export default function(io: SocketIOServer){
                                     extractedData && await updateContact(chat.contact_id, extractedData)
                                 }
                                 if(process.env.CRM_INTEGRATION){
-                                    const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
-                                        text: chat.text || '',
-                                        direction: chat.direction || '',
-                                        chat_status: chat.status || '',
-                                        chat_type: chat.type || '',
-                                        message_date: getMondayDateTime(chat.chatDate),
-                                        message_date_ms: chat.chatDate?.getTime(),
-                                        phone_number: chat.contact.phone_number || '',
-                                        sentiment: chat.sentiment || '',
-                                        language: chat.language || ''
-                                    })
-                                    //logger.info(mondayItem, 'MONDAY ITEM: ')
+                                    // create or update a contact
+                                    const mondayContact = await createOrUpdateContact(chat.contact)
+                                    const mondayCols = convertToMondayColumnValues(chat, chatBoard, [{field: 'connect_boards', value: mondayContact.id}])
+                                    //console.log('MONDAY CHAT ', JSON.stringify(mondayCols, null, 2))
+                                    const {name, ...createCols} = mondayCols
+                                    const mondayChat = await mondayCreateItem(5244743938, name || '', createCols)
+                                    //logger.info(mondayChat, 'MONDAY CHAT: ')
                                 }
                             }
 
