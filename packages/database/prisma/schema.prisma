@@ -108,8 +108,15 @@ model Chat {
   id            Int     @id @default(autoincrement())
   whatsapp_id   String? @unique
   monday_id     String? @unique
+  
   contact_id    String
-  contact       Contact @relation(fields: [contact_id], references: [id])
+  contact       Contact     @relation(fields: [contact_id], references: [id])
+
+  contact_phone_number String?
+
+  business_phone Int
+  business       PhoneNumber     @relation(fields: [business_phone], references: [phone_number])
+
   name          String?
   status        ChatStatus @default(new)
   direction     Direction?
@@ -200,6 +207,15 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+}
+
+model PhoneNumber {
+  name String
+  phone_number Int @id
+  whatsapp_phone_id String
+  whatsapp_business_id String
+  whatsapp_api_token String
+  chats Chat[]
 }
 
 model VerificationToken {
