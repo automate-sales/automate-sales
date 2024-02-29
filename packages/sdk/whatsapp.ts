@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import crypto from 'crypto';
-import { ChatItem, ChatObject, WhatsAppMediaUploadResponse, WhatsAppMessageResponse, WhatsappMediaResponse, WhatsappMessage } from './types';
+import { ChatItem, ChatObject, WhatsAppMessageResponse, WhatsappMediaResponse, WhatsappMessage } from './types';
 import { getLinkProps, isLink, normalizePhoneNumber } from './utils';
 import { File } from 'formidable';
 import { createReadStream } from 'fs'
@@ -110,12 +110,17 @@ export const generateMediaId =()=> {
 
 export const parseMessage = async (message: WhatsappMessage): Promise<ChatItem> => {
     console.log('parsing message')
-    let chat = {} as ChatItem
     if(message && message[message.type]){
-        chat.type = message.type
-        chat.whatsapp_id = message.id
-        chat.direction = 'incoming'
-        chat.chatDate = secondsToDate(message.timestamp)
+        let chat = {
+            direction: 'incoming',
+            status: 'received',
+            chat_source: 'whatsapp',
+            source_id: message.id,
+            chatDate: secondsToDate(message.timestamp),
+            name: message.text? message.text.body.substring(0, 24) : '',
+            text: message.text? message.text.body : '',
+            type: message.type
+        } as ChatItem
         switch (message.type) {
             case 'text':
                 const body = message.text?.body? message.text.body : null
@@ -130,6 +135,9 @@ export const parseMessage = async (message: WhatsappMessage): Promise<ChatItem> 
                 }
                 return chat;
             case 'contacts':
+
+                console.log('!!! PROCESSING CONTACT MESSAGE !!!')
+                
                 const contact = message.contacts ? message.contacts[0] : null
                 if(!contact) throw new Error('No contact found in contacts message')
                 const contactName = contact.name.formatted_name || contact.name.first_name
@@ -179,6 +187,7 @@ export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
     let chat = {
         type: messageType,
         direction: 'outgoing',
+        chat_source: 'whatsapp',
         chatDate: new Date()
     } as ChatObject
 
@@ -210,7 +219,6 @@ export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
             chat.location = locationObj
             return chat;
         case 'media':
-            console.log('CHAT IS MEDIA !!!!! ')
             chat.media = files.file[0] as File | null
             return chat;
         case 'template':
@@ -254,8 +262,8 @@ export async function sendMessage(
     }
     else {
         if(media && media.mimetype?.startsWith('audio/webm')) {
-        media = await convertWebmToOgg(media)
-        console.log('CONVERTED MEDIA FILE: ', media)
+            media = await convertWebmToOgg(media)
+            console.log('CONVERTED MEDIA FILE: ', media)
         } 
         const mediaId = process.env.NODE_ENV !== 'test' ? media ? await uploadToWhatsAppMediaAPI(media) : null : null
         console.log('MEDIA ID: ', mediaId)

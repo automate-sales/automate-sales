@@ -9,6 +9,7 @@ import { Server } from 'socket.io';
 import { readFileSync } from 'fs';
 import logger from '../logger';
 import whatsappRoutes from './routes/whatsapp';
+import instagramRoutes from './routes/instagram';
 import cors from 'cors';
 import { setSeenByChats } from './utils/prisma';
 
@@ -51,6 +52,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/whatsapp', whatsappRoutes(io) );
+app.use('/instagram', instagramRoutes(io) );
 
 io.on('connection', (socket) => {
     logger.info('a user connected');
