@@ -245,8 +245,8 @@ export async function sendMessage(
     if(process.env.NODE_ENV == 'test') return {
         messaging_product: 'whatsapp',
         contacts: [{
-            input: '50767474627',
-            wa_id: '50767474627',
+            input: '50766776677',
+            wa_id: '50766776677',
         }],
         messages: [{
             id: `wamid.${v4()}`

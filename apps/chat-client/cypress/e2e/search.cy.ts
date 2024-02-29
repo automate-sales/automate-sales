@@ -1,6 +1,6 @@
 describe('Test search functionality', () => {
     before(() => {
-        cy.login('gabriel@torus-digital.com');
+        cy.login('test@torus-digital.com');
     });
     beforeEach(() => {
         cy.visit('http://localhost:3000').wait(1000);

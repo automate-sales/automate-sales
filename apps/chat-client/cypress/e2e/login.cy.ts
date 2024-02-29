@@ -8,11 +8,11 @@ describe('An existing user signs in from the login page', () => {
       cy.visit('localhost:3000/api/auth/signin')
       .wait(1000)
       cy.get('#input-email-for-email-provider')
-      .type('gabriel@torus-digital.com')
-      .should('have.value', 'gabriel@torus-digital.com')
+      .type('test@torus-digital.com')
+      .should('have.value', 'test@torus-digital.com')
       .type('{enter}')
       .wait(1000)
-      cy.task('getLastEmail', 'gabriel@torus-digital.com').then((email:{body:string, html:string})=> {
+      cy.task('getLastEmail', 'test@torus-digital.com').then((email:{body:string, html:string})=> {
         cy.log('EMAIl FOUND: ', email)
         let body = email.body.toString()
         let url = body.slice(body.indexOf('http'))

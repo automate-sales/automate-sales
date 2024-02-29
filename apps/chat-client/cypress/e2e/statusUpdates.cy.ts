@@ -22,7 +22,7 @@ const getStatusBody = (
                     "id": id,
                     "status": status,
                     "timestamp": "1702492286",
-                    "recipient_id": "50767474627",
+                    "recipient_id": "50766776677",
                     "conversation": {
                         "id": "920d2d6909b84b6a811a5652063deb74",
                         "origin": {
@@ -62,7 +62,7 @@ describe('Test receiving status updates', () => {
     let contactUrl = ''
     before(() => {
         cy.log(`SERVER_URL: ${SERVER_URL}`)
-        cy.login('gabriel@torus-digital.com');
+        cy.login('test@torus-digital.com');
         cy.visit('http://localhost:3000');
         cy.get('#Gabriel-Kay').click().wait(500)
         cy.url().then((url:string) => {
