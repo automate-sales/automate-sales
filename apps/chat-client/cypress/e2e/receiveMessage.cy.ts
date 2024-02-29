@@ -22,7 +22,7 @@ const getBody = (message: any) => {
                                     "profile": {
                                         "name": "K"
                                     },
-                                    "wa_id": "50767474627"
+                                    "wa_id": "50766776677"
                                 }
                             ],
                             "messages": [
@@ -53,7 +53,7 @@ describe('Test receiving messages', () => {
     before(() => {
         cy.log(`SERVER_URL: ${SERVER_URL}`)
         cy.log(`MEDIA_BASE_URL: ${MEDIA_BASE_URL}`)
-        cy.login('gabriel@torus-digital.com');
+        cy.login('test@torus-digital.com');
         /* cy.visit('http://localhost:3000')
         cy.get('#Gabriel-Kay').click().wait(500).click().wait(500);
         cy.url().then(url => {
@@ -68,7 +68,7 @@ describe('Test receiving messages', () => {
     describe('receive a text message', () => {
         const text = "Buenas que tal";
         const body = getBody({
-            "from": "50767474627",
+            "from": "50766776677",
             "id": `wamid.${v4()}`,
             "timestamp": "1702446247",
             "text": {
@@ -91,7 +91,7 @@ describe('Test receiving messages', () => {
 
     describe('receive an image message', () => {
         const body = getBody({
-            "from": "50767474627",
+            "from": "50766776677",
             "id": `wamid.${v4()}`,
             "timestamp": "1702450103",
             "type": "image",
@@ -118,7 +118,7 @@ describe('Test receiving messages', () => {
     
     describe('receive a video message', () => {
         const body = getBody({
-            "from": "50767474627",
+            "from": "50766776677",
             "id": `wamid.${v4()}`,
             "timestamp": "1702450661",
             "type": "video",
@@ -147,7 +147,7 @@ describe('Test receiving messages', () => {
 
     describe('receive an audio message', () => {
         const body = getBody({
-            "from": "50767474627",
+            "from": "50766776677",
             "id": `wamid.${v4()}`,
             "timestamp": "1702449217",
             "type": "audio",
@@ -176,7 +176,7 @@ describe('Test receiving messages', () => {
 
     describe('receive a contact message', () => {
         const body = getBody({
-            "from": "50767474627",
+            "from": "50766776677",
             "id": `wamid.${v4()}`,
             "timestamp": "1702451588",
             "type": "contacts",
@@ -188,8 +188,8 @@ describe('Test receiving messages', () => {
                     },
                     "phones": [
                         {
-                            "phone": "+507 6330-4040",
-                            "wa_id": "50763304040",
+                            "phone": "+507 6303-3030",
+                            "wa_id": "50763033030",
                             "type": "CELL"
                         }
                     ]
@@ -212,7 +212,7 @@ describe('Test receiving messages', () => {
 
     describe('receive a location message', () => {
         const body = getBody({
-            "from": "50767474627",
+            "from": "50766776677",
             "id": `wamid.${v4()}`,
             "timestamp": "1702451765",
             "location": {
@@ -240,7 +240,7 @@ describe('Test receiving messages', () => {
 
     describe('receive a link message', () => {
         const body = getBody({
-            "from": "50767474627",
+            "from": "50766776677",
             "id": `wamid.${v4()}`,
             "timestamp": "1702451886",
             "text": {
@@ -266,7 +266,7 @@ describe('Test receiving messages', () => {
 
     describe('receive a document message', () => {
         const body = getBody({
-            "from": "50767474627",
+            "from": "50766776677",
             "id": `wamid.${v4()}`,
             "timestamp": "1702452354",
             "type": "document",
@@ -293,7 +293,7 @@ describe('Test receiving messages', () => {
     describe('receive a sticker message', () => {
         const body = getBody(
             {
-                "from": "50767474627",
+                "from": "50766776677",
                 "id": `wamid.${v4()}`,
                 "timestamp": "1702452438",
                 "type": "sticker",

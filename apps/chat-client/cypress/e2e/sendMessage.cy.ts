@@ -1,6 +1,6 @@
 describe('Test sending messages', () => {
     before(() => {
-        cy.login('gabriel@torus-digital.com');
+        cy.login('test@torus-digital.com');
         // get the url and save the url as a constant
         cy.visit('http://localhost:3000').wait(1000)
         cy.get('#Gabriel-Kay').click().click().wait(2000);
