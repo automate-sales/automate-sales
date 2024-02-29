@@ -4,13 +4,9 @@ import { useState } from 'react';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
+import { UserObj } from '../types';
 
-function UserMenu({ user }: { user: { 
-    email?: string,
-    name?: string,
-    image?: string,
-    id?: string,
-} | null }) : JSX.Element {
+function UserMenu({ user }: { user: UserObj | null }) : JSX.Element {
 	const [open, setOpen] = useState(false)
     const router = useRouter()
     
@@ -19,7 +15,7 @@ function UserMenu({ user }: { user: {
             <button onClick={() => { setOpen(!open); }} type='button'>
                 {
                     user ?
-                        <span style={{ fontSize: '25px', fontWeight: 'bold' }}>{user.email[0].toUpperCase()}</span> :
+                        <span style={{ fontSize: '25px', fontWeight: 'bold' }}>{user.email? user.email[0].toUpperCase() : ''}</span> :
                         <UserCircleIcon className='h-8 w-8' />
                 }
             </button>

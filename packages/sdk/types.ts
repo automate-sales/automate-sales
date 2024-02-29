@@ -157,7 +157,8 @@ export type WhatsappMediaObject = {
     caption?: string;
     mime_type: string,
     sha256: string,
-    id: string
+    id: string,
+    url?: string
 }
 
 export type WhatsappMediaResponse = {

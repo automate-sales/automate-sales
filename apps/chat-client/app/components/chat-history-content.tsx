@@ -43,7 +43,7 @@ export function ChatHistoryContent({ chats, contactId, agent } : {chats: Chat[],
             }
         });
         return () => {
-          socket.disconnect();
+          socket?.disconnect();
         };
     }, []);
 

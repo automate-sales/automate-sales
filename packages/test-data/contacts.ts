@@ -1,13 +1,13 @@
 export default [
     {
         "last_chat_date": 695354269.0683824,
-        "phone_number": "50767474627",
+        "phone_number": "50766776677",
         "name": "Gabriel Kay",
         "profile_picture": `${__dirname}/media/profile/1.jpg`
     },
     {
         "last_chat_date": 695354269.0683824,
-        "phone_number": "50763304040",
+        "phone_number": "50763033030",
         "name": "Lucas Kay",
         "profile_picture": null
     },

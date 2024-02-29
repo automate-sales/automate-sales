@@ -1,7 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { PaperClipIcon, FaceSmileIcon, CameraIcon, StarIcon, ChevronRightIcon, ArrowRightIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { 
+    PaperClipIcon, 
+    FaceSmileIcon, 
+    ArrowRightIcon, 
+    MapPinIcon 
+} from '@heroicons/react/24/outline';
 import { MediaButton } from './media-button';
 import { AudioButton } from './audio-button';
 import { ContactButton } from './contact-button';
@@ -13,7 +18,7 @@ import { StickerButton } from './sticker-button';
 import { Template } from 'database';
 import { TemplateInput } from './template-input';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
-import { TemplateObj } from '../../types';
+import { TemplateObj, UserObj } from '../../types';
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000';
 let socket = null as Socket | null;
@@ -27,12 +32,7 @@ function Spinner(): JSX.Element {
     )
 }
 
-export function ChatBar({contactId, user, templates}: {contactId: string, user: {
-        name?: string;
-        email?: string;
-        image?: string;
-    }, 
-    templates?: Template[]
+export function ChatBar({contactId, user, templates}: {contactId: string, user: UserObj, templates?: Template[]
 }): JSX.Element {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     
@@ -54,7 +54,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
     };
     
     
-    const userName = user.name ? user.name : user.email.split('@')[0]
+    const userName = user.name ? user.name : user.email?.split('@')[0]
 
     useEffect(() => {
         socket = io(SERVER_URL);  
@@ -63,7 +63,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
         };
         socket.on('typing', (data)=> handleTyping(data));
         return () => {
-            socket.off('typing', handleTyping);
+            socket?.off('typing', handleTyping);
         };
     }, []);
 
@@ -71,11 +71,11 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
         const currentMessage = e.target.value;
         setMessage(currentMessage);
         const isTyping = currentMessage.length > 0;
-        socket.emit('typing', { user: userName, typing: isTyping });
+        socket?.emit('typing', { user: userName, typing: isTyping });
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, mediaFile?: File) => {
-        const file = mediaFile ? mediaFile : event.target.files[0];
+        const file = mediaFile ? mediaFile : event?.target?.files? event?.target?.files[0] : null;
         if (file) {
           setMedia(file);
           setMessageType('media')
@@ -97,7 +97,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
         setTypingUser(null);
         try{
             const data = new FormData();
-            data.append('agent', user.email);
+            data.append('agent', user.email || '');
             data.append('contact_id', contactId);
             data.append('type', messageType);
             if(template) data.append('template', template.name)
@@ -118,7 +118,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
     return (
         <div className="bg-slate-200 pt-2 pb-5 px-2 gap-2">
             <form className='flex-col' onSubmit={submitForm}>
-                <TemplatesMenu templates={templates} handleTemplateChange={handleTemplateChange} />
+                <TemplatesMenu templates={templates || []} handleTemplateChange={handleTemplateChange} />
                 <div className="flex-col">
                     <div className='pb-1'>
                         {typingUser && (
@@ -130,10 +130,10 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
 
                         {/* Plus icon and menu */}
                         <div className="relative">
-                            <button className="text-gray-600 hover:text-gray-800" onClick={() => { setIsMenuOpen(!isMenuOpen); }} type="button">
+                            <button id='attachments-button' className="text-gray-600 hover:text-gray-800" onClick={() => { setIsMenuOpen(!isMenuOpen); }} type="button">
                                 <PaperClipIcon className="h-6 w-6" />
                             </button>
-                            <div className={`absolute bottom-10 -left-1 w-48 bg-white shadow-lg rounded-sm overflow-hidden transition-transform transform ${isMenuOpen ? 'scale-100' : 'scale-0'}`}>
+                            <div id='attachments-menu' className={`absolute bottom-10 -left-1 w-48 bg-white shadow-lg rounded-sm overflow-hidden transition-transform transform ${isMenuOpen ? 'scale-100' : 'scale-0'}`}>
                                 {/* Menu Items */}
                                 <MediaButton handleFileChange={handleFileChange}/>
                                 <CameraButton handleFileChange={handleFileChange} />
@@ -149,6 +149,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
                             template ? <TemplateInput template={template} isLoading={isLoading} handleParentInput={handleInputChange}/> : 
                             <div className={`flex-grow flex items-center rounded-full px-4 py-2 transition-all duration-150 ${isLoading ? 'bg-gray-400 text-gray-300' : 'bg-gray-100'}`}>
                                 <input
+                                    id='message-input'
                                     className="bg-transparent focus:outline-none w-full"
                                     disabled={isLoading}
                                     onChange={handleInputChange}
@@ -165,6 +166,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
                         
                         {message || media || template? (
                             <button
+                                id='submit-button'
                                 className="h-10 w-10 rounded-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300"
                                 disabled={isLoading}
                                 type="submit"

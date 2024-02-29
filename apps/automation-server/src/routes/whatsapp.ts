@@ -1,6 +1,5 @@
-const ENV = process.env.NODE_ENV || 'development';
 import dotenv from 'dotenv';
-dotenv.config({ path: `.env.${ENV}` });
+dotenv.config();
 
 import logger from '../../logger';
 import { Router, Request } from 'express';
@@ -9,8 +8,8 @@ import { getMondayDateTime, mondayCreateItem } from 'sdk/monday';
 
 import { downloadFileAsArrayBuffer, generateMediaId, generateMessage, getFromWhatsappMediaAPI, parseMessage, sendMessage, validateMetaSignature } from 'sdk/whatsapp';
 import { getTypeFromMime, uploadFileToS3 } from "sdk/s3"
-import type  { ChatItem, ChatObject, WhatsappMediaObject, WhatsappWebhook } from 'sdk/types'
-import { createReceivedChat, createSentChat, setRespondedChats, updateChat, updateChatByWaId, updateContact } from '../utils/prisma';
+import type  { WhatsappMediaObject, WhatsappWebhook } from 'sdk/types'
+import { createReceivedChat, createSentChat, setRespondedChats, updateChat, updateChatByWaId, updateChatStatus, updateContact } from '../utils/prisma';
 
 import { Server as SocketIOServer } from 'socket.io';
 
@@ -52,7 +51,7 @@ export default function(io: SocketIOServer){
             if(process.env.NODE_ENV != 'test' && !validateMetaSignature(rawBody, String(signature))) return res.status(200).send('Unauthorized');
             if (!body.object || !body.entry?.[0]?.changes?.[0]?.value) return res.status(200).send('Incorrect format. This endpoint expects a whatsapp webhook event');
             
-            //logger.info('BODY VALIDATED')
+            logger.info(body, 'BODY VALIDATED')
             // PROCESS EVENTS
             for(let entry of body.entry){
                 for(let change of entry.changes){
@@ -65,18 +64,22 @@ export default function(io: SocketIOServer){
                             for(let message of value.messages){
                                 let obj = await parseMessage(message)
                                 obj.status = 'received'
-                                logger.info(obj, 'OBJECT: ')
+                                //logger.info(obj, 'OBJECT: ')
                                 // lead = get or create lead
-                                const chat = await createReceivedChat(obj, wa_contact)
-                                logger.info(chat, 'CHAT: ')
+                                let chat = await createReceivedChat(obj, wa_contact)
+                                //logger.info(chat, 'CHAT: ')
+
+                                // PERHAPS MAKE THIS OPTIONAL, like try catch and log the error failed to upload media.
                                 if(message.type && mediaTypes.includes(message.type)){
                                     const media = message[message.type] as WhatsappMediaObject
                                     //logger.info(chat.media, 'media file')
                                     // must have test version
-                                    const mediaRes = await getFromWhatsappMediaAPI(media.id)
-                                    logger.info(mediaRes, 'media response \n MEDIA RESPONSE')
+                                    const mediaUrl = process.env.NODE_ENV == 'test' ? media.url : null
+                                    const mediaRes = await getFromWhatsappMediaAPI(media.id, mediaUrl)
+                                    //logger.info(mediaRes, 'media response \n MEDIA RESPONSE')
                                     const arrayBuffer = await downloadFileAsArrayBuffer(mediaRes.url)
-                                    const fileName = `${generateMediaId()}.${media.mime_type.split('/')[1]}`
+                                    //logger.info(arrayBuffer, 'ARRAY BUFFER')
+                                    const fileName = message.document?.filename || `${generateMediaId()}.${media.mime_type.split('/')[1]}`
                                     const key = `media/chats/${chat.id}/${fileName}`
                                     const s3Url = await uploadFileToS3(arrayBuffer, key);
                                     const obj = {
@@ -85,28 +88,28 @@ export default function(io: SocketIOServer){
                                         text: fileName,
                                         type: getTypeFromMime(media.mime_type)
                                     }
-                                    await updateChat(chat.id, obj)
+                                    chat = await updateChat(chat.id, obj)
                                 }
                                 // return socket event
+
+                                logger.info(chat, 'EMITTING NEW MESSAGE')
                                 io.emit('new_message', chat)
 
 
                                 // POST PROCESSING
                                 //logger.info(chat, 'POST PROCESSING CHAT: ')
                                 // analyze w chat gpt
-                                if(process.env.SENTIMENT_ANALYSIS){
+                                if(chat.type == 'text' && process.env.SENTIMENT_ANALYSIS){
                                     const gptResponse = await analyzeSentiment(chat.text || '')
                                     const analyzedChat = gptResponse && await updateChat(chat.id, gptResponse)
-                                    logger.info(analyzedChat, 'ANALYZED CHAT: ')
+                                    //logger.info(analyzedChat, 'ANALYZED CHAT: ')
                                 }
-                                if(process.env.DATA_EXTRACTION){
+                                if(chat.type == 'text' && process.env.DATA_EXTRACTION){
                                     const extractedData = await extractDemographicData(chat.contact.last_chat_text || '', chat.text || '')
-                                    logger.info(extractedData, 'EXTRACTED DATA: ')
+                                    //logger.info(extractedData, 'EXTRACTED DATA: ')
                                     extractedData && await updateContact(chat.contact_id, extractedData)
                                 }
                                 if(process.env.CRM_INTEGRATION){
-                                    // create or update contact in CRM
-                                    // create chat in CRM
                                     const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
                                         text: chat.text || '',
                                         direction: chat.direction || '',
@@ -118,7 +121,7 @@ export default function(io: SocketIOServer){
                                         sentiment: chat.sentiment || '',
                                         language: chat.language || ''
                                     })
-                                    logger.info(mondayItem, 'MONDAY ITEM: ')
+                                    //logger.info(mondayItem, 'MONDAY ITEM: ')
                                 }
                             }
 
@@ -128,7 +131,7 @@ export default function(io: SocketIOServer){
                             //logger.info('STATUS UPDATE')
                             for(let status of value.statuses){
                                 //logger.info(status, 'STATUS: ')
-                                const chat = await updateChatByWaId(status.id, { status: status.status })
+                                const chat = await updateChatStatus(status.id, status.status)
                                 // update in CRM
                                 io.emit('status_update', chat)
                             }
@@ -149,7 +152,7 @@ export default function(io: SocketIOServer){
             const errorMessage = err instanceof Error ? 
             err.message? err.message : JSON.stringify(err) :
             `Unknown error: ${err}`
-            if(ENV == 'production') return res.status(500).send(errorMessage)
+            if(process.env.NODE_ENV == 'production') return res.status(500).send(errorMessage)
             else return res.status(200).send(errorMessage)
         }
     });
@@ -181,16 +184,34 @@ export default function(io: SocketIOServer){
     router.post("/message", async (req, res, next) => {
         console.log('MESSAGE ENDPOINT TRIGERRED ')
         try{
-            //logger.info('MESSAGE ENDPOINT TRIGERRED ')
-            const { fields, files } = await formPromise(req)
-            //logger.info(fields, 'form fields')
-            const contactId = fields?.contact_id? fields.contact_id[0] : null
+            let reqType, fields, files, contactId, obj, agent;
+            if (req.headers['content-type'] === 'application/json') {
+                reqType = 'json';
+                console.log('Processing JSON body');
+                fields = req.body;
+                files = {}; // Assuming no files in JSON request
+                contactId = fields?.contact_id;
+                console.log('CONTACT ID  ', contactId)
+                delete fields.contact_id;
+                agent = ''
+                obj = fields
+            } else {
+                // Process using formidable for form data
+                reqType = 'form'
+                console.log('Processing form data using formidable');
+                const formResults = await formPromise(req);
+                fields = formResults.fields;
+                files = formResults.files;
+                contactId = fields?.contact_id ? fields.contact_id[0] : null;
+                agent = fields?.agent? fields.agent[0] : ''
+                obj = generateMessage(fields, files)
+            }
             if(!contactId) throw new Error('No contact_id found in form data')
-            let obj = generateMessage(fields, files)
-            logger.info(obj, 'MESSAGE OBJECT')
-            const agent = fields?.agent? fields.agent[0] : ''
+            
+            console.log('MESSAGE OBJECT ', obj)
+            
             const {media, template, ...item} = obj
-            logger.info(item, 'CREATING CHAT ')
+            //logger.info(item, 'CREATING CHAT ')
             let chat = await createSentChat(item, contactId)
             //logger.info(chat, 'CHAT ! ')
             if(media && media.size > 0){
@@ -209,10 +230,10 @@ export default function(io: SocketIOServer){
                 //logger.info(res, 'chat updated with media')
             }
             const phoneNumber = chat.contact.whatsapp_id
-            logger.info(template, 'template objECT')
+            //logger.info(template, 'template objECT')
             const whatsappMessage = await sendMessage(phoneNumber, chat.text, media, template)
-            //logger.info(whatsappMessage, 'whatsapp message')
-            chat = await updateChat(chat.id, { whatsapp_id: whatsappMessage.messages[0].id, status: 'pending' })
+            //logger.info(whatsappMessage, 'whatsapp message!!!')
+            chat = await updateChat(chat.id, { whatsapp_id: reqType == 'json' ? obj.whatsapp_id : whatsappMessage.messages[0].id, status: 'pending' })
             await updateContact(chat.contact_id, { last_chat_date: chat.chatDate, last_chat_text: chat.text })
             io.emit('new_message', chat)
             
@@ -222,18 +243,19 @@ export default function(io: SocketIOServer){
                 chat.contact_id,
                 chat.id,
             )
- 
-            // create in monday.com
-            const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
-                text: chat.text || '',
-                direction: chat.direction || '',
-                chat_status: chat.status || '',
-                chat_type: chat.type || '',
-                message_date: getMondayDateTime(chat.chatDate),
-                message_date_ms: chat.chatDate?.getTime(),
-                phone_number: chat.contact.phone_number || ''
-            })
-            logger.info(mondayItem, 'MONDAY ITEM: ')
+            if(process.env.CRM_INTEGRATION){
+                // create in monday.com
+                const mondayItem = await mondayCreateItem(5244743938, chat.name || '', {
+                    text: chat.text || '',
+                    direction: chat.direction || '',
+                    chat_status: chat.status || '',
+                    chat_type: chat.type || '',
+                    message_date: getMondayDateTime(chat.chatDate),
+                    message_date_ms: chat.chatDate?.getTime(),
+                    phone_number: chat.contact.phone_number || ''
+                })
+                //logger.info(mondayItem, 'MONDAY ITEM: ')
+            }
 
             return res.status(200).send('Message sent')
         } catch(err){

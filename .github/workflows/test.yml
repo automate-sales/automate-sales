@@ -1,0 +1,40 @@
+name: Tests
+on: [push]
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/automation'
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+ 
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+ 
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+ 
+      - name: Install dependencies
+        run: pnpm install
+ 
+      - name: Build
+        run: pnpm build
+
+      - name: Install Docker Compose V2
+        run: |
+          COMPOSE_VERSION=v2.23.0
+          sudo mkdir -p /usr/local/lib/docker/cli-plugins/
+          sudo curl -SL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/lib/docker/cli-plugins/docker-compose
+          sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+          docker compose version
+
+      - name: Run tests
+        run: ./test.sh

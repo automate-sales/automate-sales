@@ -1,6 +1,5 @@
-const ENV = process.env.NODE_ENV || 'development';
 import dotenv from 'dotenv';
-dotenv.config({ path: `.env.${ENV}` });
+dotenv.config();
 
 import express from 'express';
 import https from 'https'
@@ -64,7 +63,7 @@ io.on('connection', (socket) => {
     socket.on('seen_by', (data) => {
         console.log('USER SEEN BY: ', data);
         setSeenByChats(data.agent, data.contact_id)
-        .then((res)=> console.log('seen by updated: ', res))
+        //.then((res)=> console.log('seen by updated: ', res))
         .catch((err)=> console.log('error updating seen by: ', err))  
     }); 
 

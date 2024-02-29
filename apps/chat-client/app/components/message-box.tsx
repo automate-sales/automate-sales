@@ -19,10 +19,10 @@ import { AudioMessage } from "./audio-message";
 
 function IconMessage({ message, icon }: { message: Chat, icon: JSX.Element }): JSX.Element{
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center" data-cy="icon-message">
       <Link 
         className="flex flex-col items-center" 
-        href={message.media} 
+        href={message.media || ''} 
         target="_blank" 
       >
           <span className="pb-1">{message.name}</span>
@@ -33,11 +33,14 @@ function IconMessage({ message, icon }: { message: Chat, icon: JSX.Element }): J
 };
 
 function ImageMessage({ message }: { message: Chat  }): JSX.Element{
+  console.log('IMAGE MESSAGE ', message)
   return message.media ? (
-    <div className="flex items-center justify-center">
-      <Link href={message.media} target="_blank">
-          <Image alt={message.name || ''} className="w-32 h-auto" height={200} src={message.media || ''} width={200} />
-      </Link>
+    <div className="flex items-center justify-center" data-cy="image-message">
+      {
+        message.media && message.media.startsWith('http') ? <Link href={message.media} target="_blank">
+            <Image alt={message.name || ''} className="w-32 h-auto" height={200} src={message.media || ''} width={200} />
+        </Link> : <span className="pb-1">{message.name}</span>
+      }
     </div>
   ) : (
     <IconMessage icon={<CameraIcon aria-label="Camera" className="h-6 w-6"/>} message={message} />
@@ -46,7 +49,7 @@ function ImageMessage({ message }: { message: Chat  }): JSX.Element{
 
 function VideoMessage({ message }: { message: Chat  }): JSX.Element{
   return message.media ? (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center" data-cy="video-message">
       <video className="w-32 h-auto" controls height={120} width={96}>
         <source src={message.media} />
         <track kind="captions" />
@@ -59,16 +62,16 @@ function VideoMessage({ message }: { message: Chat  }): JSX.Element{
 
 interface ContactObject {
   name: string,
-  phone_number: string
+  phone: string
 }
 
 function ContactMessage({ message }: { message: Chat & {contact_object: ContactObject} }): JSX.Element{
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center" data-cy="contact-message">
       <UserCircleIcon aria-label="Contact" className="h-8 w-8 mr-2" />
       <div className="text-sm">
         <div>{message.contact_object.name}</div>
-        <Link className="text-blue-700 underline" href={`tel:+${message.contact_object.phone_number}`}>+{message.contact_object.phone_number}</Link>
+        <Link className="text-blue-700 underline" href={`tel:${message.contact_object.phone}`} data-cy="contact-link">{message.contact_object.phone}</Link>
       </div>
     </div>
   );
@@ -83,8 +86,8 @@ interface Location {
 function LocationMessage({ message }: { message: Chat & {location: Location } }): JSX.Element {
   const query = message.location.address ? message.location.address.replaceAll(' ', '+') : `${message.location.lat},${message.location.lng}`
   return (
-    <div className="flex items-center justify-center">
-      <Link className="flex flex-col items-center" href={`https://www.google.com/maps/search/?api=1&query=${query}`} target="_blank">
+    <div className="flex items-center justify-center" data-cy="location-message">
+      <Link className="flex flex-col items-center" href={`https://www.google.com/maps/search/?api=1&query=${query}`} target="_blank" data-cy="google-maps-link">
           <span className="pb-1 text-blue-700 underline">{message.location.address || 'Location'}</span>
           <MapPinIcon aria-label="Location" className="h-6 w-6"/>
       </Link>
@@ -102,11 +105,11 @@ interface LinkObject {
 }
 function LinkMessage({ message }: { message: Chat & { link: LinkObject } }): JSX.Element{
   return (
-      <Link className="flex flex-col" href={message.link.url} target="_blank">
+      <Link className="flex flex-col" href={message.link.url} target="_blank" data-cy="link-message">
           <div className="bg-slate-900 p-2">
-            {message.link.image ? <Image alt={message.link.title} className="w-full h-auto" height={200} src={message.link.image} width={200} /> : <PaperClipIcon aria-label="Link" className="h-6 w-6"/>}
+            {message.link.image ? <Image alt={message.link.title} className="w-full h-auto" height={200} src={message.link.image} width={200} data-cy="link-image"/> : <PaperClipIcon aria-label="Link" className="h-6 w-6"/>}
             <div className="text-white text-sm font-bold pt-1">{message.link.title}</div>
-            {message.link.description ? <div className="text-white text-xs">{message.link.description}</div> : null}
+            {message.link.description ? <div className="text-white text-xs" data-cy="link-description">{message.link.description}</div> : null}
           </div>
           <div className="pb-1 text-blue-600 underline">{message.link.url}</div>
       </Link>
@@ -123,14 +126,14 @@ function MessageBody({ message }: { message: Chat }): JSX.Element {
       return <VideoMessage message={message} />;
     case 'audio':
       return <AudioMessage message={message} />;
-    case 'contact':
+    case 'contacts':
       return <ContactMessage message={message as Chat & {contact_object: ContactObject}} />;
     case 'location':
       return <LocationMessage message={message as Chat & {location: Location}} />;
     case 'link':
       return <LinkMessage message={message as Chat & {link: LinkObject}} />;
     case 'document':
-      return <IconMessage icon={<DocumentTextIcon aria-label="Document" className="h-6 w-6"/>} message={message} />
+      return <IconMessage icon={<DocumentTextIcon aria-label="Document" className="h-6 w-6"/>} message={message} data-cy="document-message" />
     case 'sticker':
       return message.media?.endsWith('.mp4') ?
           <VideoMessage message={message} /> : <ImageMessage message={message} />
@@ -142,20 +145,20 @@ function MessageBody({ message }: { message: Chat }): JSX.Element {
 function MessageStatus({ message }: { message: Chat }): JSX.Element{
   if (message.direction === 'incoming') {
     return message.responded ? (
-      <CheckIcon className="text-blue-500 h-6 w-6" />
+      <CheckIcon className="blue-check text-blue-500 h-6 w-6" />
     ) : (
-      <ExclamationCircleIcon className="text-orange-500 h-6 w-6"/>
+      <ExclamationCircleIcon className="exclamation-circle text-orange-500 h-6 w-6"/>
     );
   }
   switch (message.status) {
     case 'sent':
-      return <CheckIcon className="text-green-500 h-6 w-6" />;
+      return <CheckIcon className="green-check text-green-500 h-6 w-6"  />;
     case 'delivered':
-      return <CheckCircleIcon className="text-green-500 h-6 w-6" />;
+      return <CheckCircleIcon className="green-check-circle text-green-500 h-6 w-6" />;
     case 'read':
-      return <CheckCircleIcon className="text-blue-500 h-6 w-6" />;
+      return <CheckCircleIcon className="blue-check-circle text-blue-500 h-6 w-6" />;
     case 'failed':
-      return <XCircleIcon className="text-red-500 h-6 w-6" />;
+      return <XCircleIcon className="red-x-circle text-red-500 h-6 w-6" />;
     default:
       return <div/>
   }
@@ -163,7 +166,7 @@ function MessageStatus({ message }: { message: Chat }): JSX.Element{
 
 export default function MessageBox({ message }: { message: Chat }) : JSX.Element {
   return (
-    <div className={`flex ${message.direction === 'outgoing' ? 'flex-row-reverse' : 'flex-row'} items-center mb-2`}>
+    <div className={`message-box flex ${message.direction === 'outgoing' ? 'outgoing flex-row-reverse' : 'incoming flex-row'} items-center mb-2`}>
       <div className={`${message.direction === 'outgoing' ? 'bg-green-200' : 'bg-white'} rounded-sm p-4 max-w-xs `}>
         <div className="flex items-center justify-end pb-1">
           {message.direction === 'outgoing' && (
@@ -174,7 +177,7 @@ export default function MessageBox({ message }: { message: Chat }) : JSX.Element
         </div>
         <MessageBody message={message} />
         <div className="flex gap-3 items-center justify-between mt-2 text-sm text-gray-500">
-          <div>{formatDate(message.chatDate)}</div>
+          <div className="date">{formatDate(message.chatDate)}</div>
           <MessageStatus message={message} />
         </div>
         {/* <Link href={`${process.env.NEXT_PUBLIC_MONDAY_URL}/boards/${chatBoardId}/pulses/${message.id}`} target="_blank" className="flex items-center mt-2 text-xs text-blue-600 hover:text-blue-800">

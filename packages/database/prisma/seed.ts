@@ -1,8 +1,7 @@
 import dotenv from 'dotenv';
-const NODE_ENV = process.env.NODE_ENV || 'development';
-dotenv.config({ path: `.env.${NODE_ENV}`});
+dotenv.config();
 
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { createPublicBucket, uploadImageToS3, wipeS3Bucket } from "sdk/s3";
 import {contacts, chats} from "test-data";
 import { Chat, ChatStatus, ChatType, Direction, PrismaClient } from '@prisma/client'
@@ -20,6 +19,18 @@ async function wipeDatabase() {
   console.log('Wiping Data')
   await prisma.chat.deleteMany();
   await prisma.contact.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.user.deleteMany();
+}
+
+async function seedUsers() {
+  const users = [
+    {
+      name: "John Doe",
+      email: "johndoe@doejohn.com"
+    }
+  ];
+  for (let u of users) await prisma.user.create({data: u});
 }
 
 async function seedContacts() {
@@ -101,6 +112,41 @@ async function seedChats() {
   }
 }
 
+const getMimeFromExtension =(extension: string)=> {
+  switch(extension) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg'
+    case 'png':
+      return 'image/png'
+    case 'mp4':
+      return 'video/mp4'
+    case 'pdf':
+      return 'application/pdf'
+    case 'csv':
+      return 'text/csv'
+    case 'webp':
+      return 'image/webp'
+    case 'ogg':
+      return 'audio/ogg'
+    default:
+      return 'application/octet-stream'
+  }
+}
+
+async function seedTestMedia(){
+  const files = readdirSync(`${__dirname}/media`)
+  for(let fileName of files) {
+    console.log('FILENAME ', fileName)
+    const filePath = `${__dirname}/media/${fileName}`;
+    console.log('FILEPATH: ', filePath)
+    const file = readFileSync(filePath);
+    const fpath = `media/test/${fileName}`
+    console.log('FILEPATH: ', fpath)
+    //const mimeObj = await fileTypeFromBuffer(file)
+    await uploadImageToS3(bucketName, fpath, file, getMimeFromExtension(fileName.split('.')[1]))
+  }
+}
 
 async function wipeData() {
   return await Promise.all([
@@ -110,13 +156,16 @@ async function wipeData() {
 }
 
 async function seedData() {
+  await seedUsers();
   await seedContacts();
   await seedChats();
+  await seedTestMedia();
 }
 
 async function main() {
   try{
-    if (NODE_ENV !== 'production') {
+    console.log('SHEDZEER!! ')
+    if (process.env.NODE_ENV !== 'production') {
       await createPublicBucket(bucketName)
     }
     await wipeData()

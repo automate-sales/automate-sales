@@ -90,12 +90,23 @@ export async function getChatHistory(contact_id: string, skip?: number) {
 export async function sendMessage(formData: FormData) {
   const endpoint = `${process.env.NEXT_PUBLIC_SERVER_URL}/whatsapp/message`
   console.log('SENDING MESSAGE TO ', endpoint, formData)
-  const res = await fetch(endpoint, {
-      method: 'POST',
-      body: formData
-  })
-  console.log('RESPONSE ! ', res)
-  return true
+  try {
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        body: formData
+        // Do not manually set Content-Type here
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    console.log('RESPONSE ! ', res);
+    return true;
+  } catch (error) {
+    console.error('Error in sendMessage:', error);
+    throw error;  // Re-throw to handle it in the calling function
+  }
 };
 
 export async function getTemplates() {

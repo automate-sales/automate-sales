@@ -4,7 +4,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch"]
-  binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "linux-arm64-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -88,6 +88,7 @@ enum ChatType {
   image
   video
   contact
+  contacts
   location
   link
   document
@@ -104,15 +105,15 @@ enum Sentiment {
 }
 
 model Chat {
-  id            Int         @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   whatsapp_id   String? @unique
   monday_id     String? @unique
   contact_id    String
-  contact       Contact     @relation(fields: [contact_id], references: [id])
+  contact       Contact @relation(fields: [contact_id], references: [id])
   name          String?
-  status   ChatStatus @default(new)
+  status        ChatStatus @default(new)
   direction     Direction?
-  type     ChatType?
+  type          ChatType?
   text          String?
   media         String?
   location      Json?

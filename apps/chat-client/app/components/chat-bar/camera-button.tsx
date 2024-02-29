@@ -1,11 +1,12 @@
 import { CameraIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef, useState } from 'react';
 
-export function CameraButton({handleFileChange}:{handleFileChange: any}){
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [cameraStarted, setCameraStarted] = useState<boolean>(false);
-    const [pictureTaken, setPictureTaken] = useState<boolean>(false);
+export function CameraButton({ handleFileChange }: { handleFileChange: any }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [cameraStarted, setCameraStarted] = useState<boolean>(false);
+  const [pictureTaken, setPictureTaken] = useState<boolean>(false);
+  const [cameraError, setCameraError] = useState<string>('');
 
   const highResolutionConstraints: MediaStreamConstraints = {
     video: {
@@ -27,6 +28,7 @@ export function CameraButton({handleFileChange}:{handleFileChange: any}){
         .catch(error => {
           console.error('Error accessing the camera', error);
           setCameraStarted(false);
+          setCameraError(error)
         });
     }
   }, [cameraStarted]);
@@ -47,7 +49,7 @@ export function CameraButton({handleFileChange}:{handleFileChange: any}){
     }
   };
 
-  
+
   const cancelPicture = () => {
     setPictureTaken(false);
     setCameraStarted(false);
@@ -58,7 +60,6 @@ export function CameraButton({handleFileChange}:{handleFileChange: any}){
       canvasRef.current.toBlob(async (blob) => {
         if (blob) {
           const file = new File([blob], 'captured-image.jpg', { type: 'image/jpeg' });
-          console.log('FIL:EE YEAHHH ', file)
           handleFileChange(null, file)
 
           // Stop the camera
@@ -75,23 +76,29 @@ export function CameraButton({handleFileChange}:{handleFileChange: any}){
   console.log('cameraStarted', cameraStarted);
   return (
     <div>
-      {/* Always render the canvas, but make it invisible when not needed */}
-      <canvas ref={canvasRef} style={{ display: pictureTaken ? 'block' : 'none', width: '100%' }} />
-      
+      {cameraError && <div data-cy="camera-error">{cameraError}</div>}
+
+      <canvas ref={canvasRef} style={{ display: pictureTaken ? 'block' : 'none', width: '100%' }} data-cy="canvas" />
+
       {cameraStarted && !pictureTaken && (
-        <video ref={videoRef} autoPlay playsInline style={{ width: '100%' }} />
+        <video ref={videoRef} autoPlay playsInline style={{ width: '100%' }} data-cy="video-stream" />
       )}
 
       {pictureTaken ? (
         <>
-          <button onClick={cancelPicture}>Cancel</button>
-          <button onClick={confirmUpload}>Confirm Upload</button>
+          <button onClick={cancelPicture} data-cy="cancel-button">Cancel</button>
+          <button onClick={confirmUpload} data-cy="confirm-upload-button">Confirm Upload</button>
         </>
-      ) : (
-        <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={cameraStarted ? takePicture : startCamera} type="button">
-            <CameraIcon className="h-6 w-6 mr-2" /> {cameraStarted ? 'Capture' : 'Camera'}
+      ) : cameraStarted ?
+        <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={takePicture} type="button" data-cy="capture-button">
+          <CameraIcon className="h-6 w-6 mr-2" /> 
+          <span>Capture</span>
+        </button> :
+        <button className="flex items-center p-2 hover:bg-gray-100 w-full" onClick={startCamera} type="button" data-cy="camera-start-button">
+          <CameraIcon className="h-6 w-6 mr-2" />
+          <span>Camera</span>
         </button>
-      )}
+      }
     </div>
   );
 };

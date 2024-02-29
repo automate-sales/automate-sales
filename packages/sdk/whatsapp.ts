@@ -10,7 +10,7 @@ import FormData from 'form-data';
 import axios from 'axios';
 import { getTypeFromMime } from './s3';
 import { convertWebmToOgg } from './media';
-
+import {v4} from 'uuid'
 
 export const validateMetaSignature = (payload: string, signature: string) => {
     const hash = crypto.createHmac('sha1', process.env.META_APP_SECRET as string).update(payload).digest('hex');
@@ -95,7 +95,7 @@ const parseMediaChat =(message: WhatsappMessage)=> {
         const filename = 'filename' in media ? String(media.filename) : null
         return {
             media: media.id,
-            mimeType: media.mime_type,
+            //mimeType: media.mime_type,
             text: filename || caption || media.mime_type,
             name: filename || media.mime_type
         } as any
@@ -173,15 +173,17 @@ const extractParams = (templateBody: string) => {
 }
 
 export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
-    console.log('generating message')
-    const messageType = fields?.type[0] ? fields.type[0] : null as string | null
+    console.log('generating message ', fields, files)
+    const messageType = fields?.type?.length > 0 ? fields.type[0] : null as string | null
     if(!messageType) throw new Error('No message type found in form data')
     let chat = {
         type: messageType,
         direction: 'outgoing',
         chatDate: new Date()
     } as ChatObject
-    const text = fields?.text[0] ? fields.text[0] : null as string | null
+
+    console.log('CHAT OBJECT ', chat)
+    const text = fields?.text?.length > 0 ? fields.text[0] : null as string | null
     switch(messageType){
         case 'text':
             if(!text) throw new Error('No text found in text message')
@@ -208,6 +210,7 @@ export const generateMessage = ( fields: {[key: string]: any}, files: any) => {
             chat.location = locationObj
             return chat;
         case 'media':
+            console.log('CHAT IS MEDIA !!!!! ')
             chat.media = files.file[0] as File | null
             return chat;
         case 'template':
@@ -237,62 +240,80 @@ export async function sendMessage(
     } | null // template name
 ): Promise<WhatsAppMessageResponse>{
     if(!message && !media && !template || !phone) throw new Error('Must provide a message or media and a phone number')
-    console.log('WHATSAP MEDIA FILE: ', media)
-    console.log('template: ', template)
-    if(media && media.mimetype?.startsWith('audio/webm')) {
-      media = await convertWebmToOgg(media)
-      console.log('CONVERTED MEDIA FILE: ', media)
-    } 
-    const mediaId = media ? await uploadToWhatsAppMediaAPI(media) : null
-    console.log('MEDIA ID: ', mediaId)
-    const fileName = media?.originalFilename || media?.mimetype ? `${media?.newFilename}.${media?.mimetype?.split('/')[1]}` : media?.newFilename
-    const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_ID}/messages`
-    const messageType = template ? 'template' : getTypeFromMime(media?.mimetype)
-    const data = {
-        messaging_product: "whatsapp",
-        to: phone,
-        type: messageType,
-        ...(message? {text: {body: message}} : {}),
-        ...(media? {[messageType]: {id: mediaId, ...(messageType === 'document'? {filename: fileName} : {})}} : {}),
-        ...(template? {template: {
-            name: template.name,
-            language: {
-                code: template.language || 'es'
-            },
-            ...(template.params? {
-                components: [
-                    {
-                    "type": "body",
-                    "parameters": template.params.map(param => {
-                            return {
-                                "type": "text",
-                                "text": param
-                            }
-                        })
-                    }
-                ]
-            } : {})
-        }} : {}),
+    //console.log('WHATSAP MEDIA FILE: ', media)
+    //console.log('template: ', template)
+    if(process.env.NODE_ENV == 'test') return {
+        messaging_product: 'whatsapp',
+        contacts: [{
+            input: '50766776677',
+            wa_id: '50766776677',
+        }],
+        messages: [{
+            id: `wamid.${v4()}`
+        }]
     }
-    const res = await fetch(url , {
-        method: 'post',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`
-        },
-        body: JSON.stringify(data)
-    });
-    if(res.ok){
-        return await res.json() as WhatsAppMessageResponse;
-    } else {
-        const errorTxt = await res.text()
-        throw new Error(errorTxt)
+    else {
+        if(media && media.mimetype?.startsWith('audio/webm')) {
+        media = await convertWebmToOgg(media)
+        console.log('CONVERTED MEDIA FILE: ', media)
+        } 
+        const mediaId = process.env.NODE_ENV !== 'test' ? media ? await uploadToWhatsAppMediaAPI(media) : null : null
+        console.log('MEDIA ID: ', mediaId)
+        const fileName = media?.originalFilename || media?.mimetype ? `${media?.newFilename}.${media?.mimetype?.split('/')[1]}` : media?.newFilename
+        const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_ID}/messages`
+        const messageType = template ? 'template' : getTypeFromMime(media?.mimetype)
+        const data = {
+            messaging_product: "whatsapp",
+            to: phone,
+            type: messageType,
+            ...(message? {text: {body: message}} : {}),
+            ...(media? {[messageType]: {id: mediaId, ...(messageType === 'document'? {filename: fileName} : {})}} : {}),
+            ...(template? {template: {
+                name: template.name,
+                language: {
+                    code: template.language || 'es'
+                },
+                ...(template.params? {
+                    components: [
+                        {
+                        "type": "body",
+                        "parameters": template.params.map(param => {
+                                return {
+                                    "type": "text",
+                                    "text": param
+                                }
+                            })
+                        }
+                    ]
+                } : {})
+            }} : {}),
+        }
+        const res = await fetch(url , {
+            method: 'post',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`
+            },
+            body: JSON.stringify(data)
+        });
+        if(res.ok){
+            return await res.json() as WhatsAppMessageResponse;
+        } else {
+            const errorTxt = await res.text()
+            throw new Error(errorTxt)
+        }
     }
 }
 
-
-
-export async function getFromWhatsappMediaAPI(mediaId: string): Promise<WhatsappMediaResponse>{
+export async function getFromWhatsappMediaAPI(mediaId: string, url: string | null=null): Promise<WhatsappMediaResponse>{
+    if(process.env.NODE_ENV == 'test') return {
+        messaging_product: 'whatsapp',
+        url: url || '',
+        mime_type: 'image/jpeg',
+        sha256: 'sha256',
+        id: mediaId,
+        file_size: 123456
+    }
     const res = await fetch(`https://graph.facebook.com/v18.0/${mediaId}/`, {
         method: 'GET',
         headers: {
@@ -313,9 +334,9 @@ export const downloadFileAsArrayBuffer = async (url: URL | string): Promise<Arra
             String(url),
             {
                 responseType: 'arraybuffer',
-                headers: {
+                ...(process.env.NODE_ENV != 'test' && {headers: {
                     'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`
-                }
+                }})
 
             }
         );

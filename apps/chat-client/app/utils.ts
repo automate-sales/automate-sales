@@ -5,6 +5,7 @@ import EmailProvider from "next-auth/providers/email";
 import { createTransport } from "nodemailer"
 import { text, html } from "./components/emails/auth";
 import { PrismaClient } from "database";
+import { UserObj } from './types';
 
 const prisma = new PrismaClient()
 export const authOptions = {
@@ -40,7 +41,7 @@ export const authOptions = {
               const failed = result.rejected.concat(result.pending).filter(Boolean)
               if (failed.length) {
                 throw new Error(`Email(s) (${failed.join(", ")}) could not be sent`)
-              } else console.info('Sent a verification email')
+              } else console.info(`Sent a verification email from ${process.env.EMAIL_HOST}`)
           },
         })
     ],
@@ -64,11 +65,7 @@ export const authOptions = {
 
 export const getCurrentUser = async(
     mondayToken:string|null=null,
-) :  Promise<{
-    name?: string;
-    email?: string;
-    image?: string;
-} | null> => {
+) :  Promise<UserObj | null> => {
     try{
         if(mondayToken) return await mondayAuth(mondayToken)
         else {

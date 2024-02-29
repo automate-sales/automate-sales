@@ -1,0 +1,80 @@
+version: '3.5'
+
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: automation
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+  
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: password
+    command: server /data --console-address :9001
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  automation-server:
+    build:
+      context: .
+      dockerfile: apps/automation-server/Dockerfile
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/automation"
+      PROJECT_NAME: automation
+      PORT: 8000
+      CLIENT_URL: "http://chat-client:3000"
+      MEDIA_BASE_URL: "http://minio:9000"
+      WHATSAPP_BUSINESS_ID: 128414227025571
+      WHATSAPP_PHONE_ID: 102033866282874
+      AWS_REGION: "us-east-1"
+      AWS_DEFAULT_REGION: "us-east-1"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - minio
+    restart: unless-stopped
+
+  chat-client:
+    build:
+      context: .
+      dockerfile: apps/chat-client/Dockerfile
+    command:
+      - sh 
+      - -c
+      - |
+        npx prisma db push
+        node prisma/seed.js
+        npx start-server-and-test 'npx next dev' http://localhost:3000 'cypress run --e2e'
+    ports:
+      - "3000:3000"
+    environment:
+      SKIP_ENV_VALIDATION: "true"
+      NODE_ENV: test
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/automation"
+      PROJECT_NAME: automation
+      NEXT_PUBLIC_MONDAY_URL: "https://torus-digital.monday.com"
+      NEXT_PUBLIC_SERVER_URL: "http://automation-server:8000"
+      NEXTAUTH_URL: "http://localhost:3000"
+      NEXTAUTH_SECRET: secret12386
+      AWS_REGION: "us-east-1"
+      AWS_DEFAULT_REGION: "us-east-1"
+      EMAIL_HOST: test
+      WHATSAPP_BUSINESS_ID: 128414227025571
+      WHATSAPP_PHONE_ID: 102033866282874
+      SERVER_URL: "http://automation-server:8000"
+      MEDIA_BASE_URL: "http://minio:9000"
+      CYPRESS_SERVER_URL: "http://automation-server:8000"
+      CYPRESS_MEDIA_BASE_URL: "http://minio:9000"
+    depends_on:
+      - postgres
+      - minio
+      - automation-server
