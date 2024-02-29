@@ -35,4 +35,7 @@ yarn-error.log*
 # vscode
 .vscode
 
+#ngrok
+ngrok.yml
+
 temp_optional_files/

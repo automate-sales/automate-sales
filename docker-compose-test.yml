@@ -32,8 +32,7 @@ services:
       PORT: 8000
       CLIENT_URL: "http://chat-client:3000"
       MEDIA_BASE_URL: "http://minio:9000"
-      WHATSAPP_BUSINESS_ID: 128414227025571
-      WHATSAPP_PHONE_ID: 102033866282874
+      WHATSAPP_PHONE_ID: 123123123123123
       AWS_REGION: "us-east-1"
       AWS_DEFAULT_REGION: "us-east-1"
     ports:
