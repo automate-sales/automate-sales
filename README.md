@@ -14,9 +14,9 @@
 4. Follow the channel setup section of this guide to setup whatsapp in development
 5. Run `docker-compose up` from the root of the project to create a local postgres database and object storage.
 6. Open a new terminal window and Run `pnpm install` to install dependencies
-7. run `turbo db:push` to create the db
-8. run `turbo db:seed` to create test data
-9. run `turbo dev` to start all of the development servers
+7. run `npx turbo db:push` to create the db
+8. run `npx turbo db:seed` to create test data
+9. run `npx turbo dev` to start all of the development servers
 
 ## Setting up ngrock
 1. create a free ngrock account to recieve a static tunnel domain, this way when you stop/start the server you dont need to reconfigure your webhooks
