@@ -3,16 +3,20 @@
 ## Requirements
 - node js and npm or preferably pnpm
 - docker and docker-compose or docker studio
+- a docker hub account
 - turbo repo
 - ngrock, tunnel or an equivalent
 
 ## Gettign Started
-1. Setup environment variables environment variables
-2. Run `docker-compose up` from the root of the project to create a local postgres database and object storage.
-3. Open a new terminal window and Run `pnpm install` to install dependencies
-5. run `turbo db:push` to create the db
-6. run `turbo db:seed` to create test data
-7. run `turbo dev` to start all of the development servers
+1. Setup environment variables copy the .env_example file and rename it .env.development
+2. create a docker hub account and set the DOCKER_USER and DOCKER_PASSWORD env variables
+3. Follow the next section of this guide to set up ngrok
+4. Follow the channel setup section of this guide to setup whatsapp in development
+5. Run `docker-compose up` from the root of the project to create a local postgres database and object storage.
+6. Open a new terminal window and Run `pnpm install` to install dependencies
+7. run `turbo db:push` to create the db
+8. run `turbo db:seed` to create test data
+9. run `turbo dev` to start all of the development servers
 
 ## Setting up ngrock
 1. create a free ngrock account to recieve a static tunnel domain, this way when you stop/start the server you dont need to reconfigure your webhooks
