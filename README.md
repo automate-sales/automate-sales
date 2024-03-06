@@ -84,5 +84,47 @@ extract the gps location (coordinates) and additional info from a text address
 
 ### Setup
 To use setup the OPENAI_API_KEY
-1. 
 
+
+# Testing
+
+## setup
+create a .env file with the following content
+
+```
+# global env vars
+NODE_ENV=test
+PROJECT_NAME=automation
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/automation"
+AWS_REGION=us-east-1
+AWS_DEFAULT_REGION=us-east-1
+
+# env vars for server
+PORT=8000
+CLIENT_URL=http://localhost:3000
+MEDIA_BASE_URL=http://localhost:9000
+WHATSAPP_BUSINESS_ID=123123123123
+WHATSAPP_PHONE_ID=102337673763
+
+# env vars for client
+NEXT_PUBLIC_MONDAY_URL=https://test.monday.com
+NEXT_PUBLIC_SERVER_URL=http://localhost:8000
+EMAIL_HOST=test
+NEXTAUTH_SECRET=secret247742
+```
+
+## headless mode
+for running tests in headless mode, simply run the test.sh script `./test.sh` 
+
+this will lift up all of the docker containers and run the entire test suite in headless mode and will exit all of the containers once the test suite has completed.
+
+Make sure you dont have the docker containers or the dev server running for development running while you execute the test script.
+
+## Non headless
+If you want to interact with the test suite visually, you can use the cypress UI.
+
+for this, make sure you have your docker containers for development up `docker-compose up` and your dev server running `npx turbo dev`
+
+then you can go into the chat-client app `cd apps/chat-client` and run `npx cypress open`
+
+then you can select chrome and e2e tests and execute the tests visually
