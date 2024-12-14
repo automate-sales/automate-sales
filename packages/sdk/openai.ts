@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { removeEmptyFields } from './utils';
 dotenv.config();
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/completions';
@@ -37,20 +38,21 @@ export async function analyzeSentiment(text: string) {
             })
         });
         const data = await response.json();
-        console.info('DATA: ', data)
-        const result = data?.choices[0]?.text? JSON.parse(data.choices[0].text.trim()) : null;
-        console.info('RESULT: ', result)
-        if (!result) throw new Error('Incompatible chat gpt response')
-        //const insightLabels = chat.insights.labels
-        //console.info(insightLabels, 'INSIGHT LABELS')
-        //const insights = getKeysForValues(result.insights, insightLabels)
-        //console.info(insights, 'INSIGHTS')
-        const res = {
-            language: result.language,
-            sentiment: result.sentiment,
-            insights: result.insights
-        };
-        return res;
+        let result;
+        try {
+            // Try to parse the text as JSON
+            result = JSON.parse(data?.choices[0]?.text?.trim());
+        } catch (jsonParseError) {
+            // If parsing fails, attempt to extract JSON string using regex
+            const regex = /{.*?}/; // Adjust the regex according to expected JSON structure
+            const match = data?.choices[0]?.text?.match(regex);
+            if (match) {
+                result = JSON.parse(match[0]);
+            }
+        }
+        console.info('SENTIMENT ANALYSIS RESULT: ', result);
+        if (!result) throw new Error('Incompatible chat gpt response');
+        return removeEmptyFields(result);
     } catch(err: any){
         console.error(err)
         //throw new Error(err)
@@ -83,6 +85,7 @@ export async function extractDemographicData(previousMessage: string, currentMes
     
     Do not include any explanatory text or comments in the response. Only provide the JSON object.`;
     try {
+        console.info('PROMPT: ', prompt)
         const response = await fetch(OPENAI_API_URL, {
             method: 'POST',
             headers: {
@@ -100,13 +103,38 @@ export async function extractDemographicData(previousMessage: string, currentMes
             })
         });
         const data = await response.json();
-        console.info('DATA: ', data)
-        const result = data?.choices[0]?.text? JSON.parse(data.choices[0].text.trim()) : null;
-        console.info('RESULT: ', result)
-        if (!result) throw new Error('Incompatible chat gpt response')
-        return result;
+        console.info('EXTRACT DATA RESPONSE: ', data);
+        let result;
+        try {
+            // Try to parse the text as JSON
+            result = JSON.parse(data?.choices[0]?.text?.trim());
+        } catch (jsonParseError) {
+            // If parsing fails, attempt to extract and correct the JSON string using regex
+            const regex = /\{[\s\S]*?\}/; // Non-greedy match to the closing brace of JSON object
+            const match = data?.choices[0]?.text?.match(regex);
+            if (match) {
+                let correctedJsonString = match[0];
+
+                // Remove newline characters and excessive spaces
+                correctedJsonString = correctedJsonString.replace(/\n/g, '');
+                correctedJsonString = correctedJsonString.replace(/\s{2,}/g, ' ');
+
+                // Remove any trailing commas before the closing brace
+                correctedJsonString = correctedJsonString.replace(/,\s*}/, '}');
+
+                // Correct property names to be double-quoted
+                correctedJsonString = correctedJsonString.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
+
+                result = JSON.parse(correctedJsonString);
+            }
+        }
+        console.info('EXTRACT DATA RESULT: ', result);
+        if (!result) throw new Error('Incompatible chat gpt response');
+        return removeEmptyFields(result);
     } catch(err: any){
         console.error(err)
         //throw new Error(err)
     }
 }
+
+

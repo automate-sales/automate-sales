@@ -126,3 +126,12 @@ export const getLinkProps = async(path: string | URL)=> {
 export const getInitials =(name: string | null | undefined): string=> {
     return name ? name.split(' ').map(word => word.charAt(0).toUpperCase()).join('') : '?';
 }
+
+export function removeEmptyFields(obj: {[key:string]: any}) {
+    Object.keys(obj).forEach(key => {
+      if (obj[key] === '' || obj[key] === null || obj[key] === undefined || (Array.isArray(obj[key]) && obj[key].length === 0)) {
+        delete obj[key];
+      }
+    });
+    return obj;
+}
