@@ -169,14 +169,17 @@ export default function MessageBox({ message }: { message: Chat }) : JSX.Element
     <div className={`message-box flex ${message.direction === 'outgoing' ? 'outgoing flex-row-reverse' : 'incoming flex-row'} items-center mb-2`}>
       <div className={`${message.direction === 'outgoing' ? 'bg-green-200' : 'bg-white'} rounded-sm p-4 max-w-xs `}>
         <div className="flex items-center justify-end pb-1">
-          {message.direction === 'outgoing' && (
+          <div className="flex justify-between w-full items-center pb-2">
+            <div className="text-xs text-gray-500">{message.chat_source}</div>
+            {message.direction === 'outgoing' ?
             <div className="flex-shrink-0 h-6 w-6 rounded-full bg-green-700 text-white flex items-center justify-center text-sm font-medium uppercase" title={message.updatedBy || 'Unknown'}>
               {message.updatedBy ? message.updatedBy : '?'}
-            </div>
-          )}
+            </div> : <div/>
+            }
+          </div>
         </div>
         <MessageBody message={message} />
-        <div className="flex gap-3 items-center justify-between mt-2 text-sm text-gray-500">
+        <div className="flex gap-3 items-center justify-between mt-2 text-xs text-gray-500">
           <div className="date">{formatDate(message.chatDate)}</div>
           <MessageStatus message={message} />
         </div>

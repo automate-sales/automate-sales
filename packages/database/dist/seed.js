@@ -54135,7 +54135,8 @@ var chats_default = [
   {
     "type": "audio",
     "direction": "incoming",
-    "whatsapp_id": "B6611423B529AF4607AA0E0E24782B33",
+    "chat_source": "whatsapp",
+    "source_id": "B6611423B529AF4607AA0E0E24782B33",
     "phone_number": "50766776677",
     "message_date": 718300102,
     "media": `${__dirname}/media/chat/audio.opus`,
@@ -54145,7 +54146,8 @@ var chats_default = [
   {
     "type": "document",
     "direction": "incoming",
-    "whatsapp_id": "3EB09115044BA110D44013",
+    "chat_source": "whatsapp",
+    "source_id": "3EB09115044BA110D44013",
     "phone_number": "50766776677",
     "message_date": 718302276,
     "media": `${__dirname}/media/chat/pdf.pdf`,
@@ -54155,7 +54157,8 @@ var chats_default = [
   {
     "type": "image",
     "direction": "incoming",
-    "whatsapp_id": "3AF00DE728CFAF4243ED",
+    "chat_source": "whatsapp",
+    "source_id": "3AF00DE728CFAF4243ED",
     "phone_number": "50766776677",
     "message_date": 718310278,
     "media": `${__dirname}/media/chat/image.jpg`,
@@ -54165,7 +54168,8 @@ var chats_default = [
   {
     "type": "video",
     "direction": "incoming",
-    "whatsapp_id": "3AC9FB73FB80196C7545",
+    "chat_source": "whatsapp",
+    "source_id": "3AC9FB73FB80196C7545",
     "phone_number": "50766776677",
     "message_date": 545349586,
     "media": `${__dirname}/media/chat/video.mp4`,
@@ -54175,7 +54179,8 @@ var chats_default = [
   {
     "type": "sticker",
     "direction": "incoming",
-    "whatsapp_id": "3A6F171193D68BC7C396",
+    "chat_source": "whatsapp",
+    "source_id": "3A6F171193D68BC7C396",
     "phone_number": "50766776677",
     "message_date": 557863465,
     "media": `${__dirname}/media/chat/sticker.mp4`,
@@ -54185,7 +54190,8 @@ var chats_default = [
   {
     "type": "sticker",
     "direction": "incoming",
-    "whatsapp_id": "3AD1DC95CBAF6AD51811",
+    "chat_source": "whatsapp",
+    "source_id": "3AD1DC95CBAF6AD51811",
     "phone_number": "50766776677",
     "message_date": 565936875,
     "media": `${__dirname}/media/chat/sticker.webp`,
@@ -54195,7 +54201,8 @@ var chats_default = [
   {
     "type": "document",
     "direction": "outgoing",
-    "whatsapp_id": "3EB0783983DD70659B0A",
+    "chat_source": "whatsapp",
+    "source_id": "3EB0783983DD70659B0A",
     "phone_number": "50766776677",
     "message_date": 638138739,
     "media": `${__dirname}/media/chat/csv.csv`,
@@ -54205,7 +54212,8 @@ var chats_default = [
   {
     "type": "location",
     "direction": "incoming",
-    "whatsapp_id": "3A4C47850F886ACBC7C9",
+    "chat_source": "whatsapp",
+    "source_id": "3A4C47850F886ACBC7C9",
     "phone_number": "50766776677",
     "message_date": 549166176,
     "location": {
@@ -54218,7 +54226,8 @@ var chats_default = [
   {
     "type": "link",
     "direction": "incoming",
-    "whatsapp_id": "3AE94336A02CC567998C",
+    "chat_source": "whatsapp",
+    "source_id": "3AE94336A02CC567998C",
     "phone_number": "50766776677",
     "message_date": 555897611,
     "link": {
@@ -54230,7 +54239,8 @@ var chats_default = [
   {
     "type": "text",
     "direction": "outgoing",
-    "whatsapp_id": "3A8FC24FC2AE37998C64",
+    "chat_source": "whatsapp",
+    "source_id": "3A8FC24FC2AE37998C64",
     "phone_number": "50766776677",
     "message_date": 5556105416680498e-7,
     "text": "Como estas?"
@@ -54238,7 +54248,8 @@ var chats_default = [
   {
     "type": "text",
     "direction": "outgoing",
-    "whatsapp_id": "3A8FC24FC2AE37998C64",
+    "chat_source": "whatsapp",
+    "source_id": "3A8FC24FC2AE37998C64",
     "phone_number": "50767230238",
     "message_date": 5556105416680498e-7,
     "text": "Que tal?"
@@ -54246,7 +54257,8 @@ var chats_default = [
   {
     "type": "contact",
     "direction": "outgoing",
-    "whatsapp_id": "3AF485208967B97B4F47",
+    "chat_source": "whatsapp",
+    "source_id": "3AF485208967B97B4F47",
     "phone_number": "50766776677",
     "message_date": 5559097313794751e-7,
     "contact_object": {
@@ -54617,10 +54629,11 @@ async function seedContacts() {
     let newContact = {
       ...contact,
       id: contactId,
-      whatsapp_id: contact.phone_number,
+      contact_source: "whatsapp",
+      source_id: contact.phone_number,
+      source_name: contact.name,
       name: contact.name ? normalizeName(contact.name) : contact.phone_number,
       phone_number: phoneNumberObj?.e164Format,
-      whatsapp_name: contact.name,
       last_chat_date: cocoaToDate(contact.last_chat_date)
     };
     if (contact.profile_picture && (0, import_fs.existsSync)(contact.profile_picture)) {

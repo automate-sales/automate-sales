@@ -16,6 +16,13 @@ export type PhoneNumberObj = {
     error?: string
 }
 
+export type instagramContact = {
+    id: string,
+    username: string,
+    name?: string,
+    profile_picture?: string
+}
+
 export type WhatsappContact = {
     profile: {
         name: string;
@@ -112,7 +119,8 @@ export type WhatsappWebhook = {
 
 
 export type ChatObject = {
-    whatsapp_id: string,
+    chat_source: string,
+    source_id: string,
     name: string,
     type: any,
     direction: any,

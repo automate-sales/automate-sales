@@ -14,7 +14,7 @@ export async function searchAction(queryString: string) {
               },
             },
             {
-              whatsapp_name: {
+              source_name: {
                 contains: queryString,
                 mode: 'insensitive',
               },
@@ -87,8 +87,8 @@ export async function getChatHistory(contact_id: string, skip?: number) {
   });
 }
 
-export async function sendMessage(formData: FormData) {
-  const endpoint = `${process.env.NEXT_PUBLIC_SERVER_URL}/whatsapp/message`
+export async function sendMessage(formData: FormData, source: 'whatsapp' | 'instagram') {
+  const endpoint = `${process.env.NEXT_PUBLIC_SERVER_URL}/${source}/message`
   console.log('SENDING MESSAGE TO ', endpoint, formData)
   try {
     const res = await fetch(endpoint, {

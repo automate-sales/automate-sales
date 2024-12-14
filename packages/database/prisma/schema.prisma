@@ -35,13 +35,17 @@ enum ContactSource {
   store
 }
 
+
+
 model Contact {
   id              String         @id @default(cuid())
-  whatsapp_id     String? @unique
-  monday_id       String? @unique
-  whatsapp_name   String?
-  contact_status  ContactStatus? @default(lead)
+  
   contact_source  ContactSource? @default(whatsapp)
+  source_id     String? @unique
+  source_name   String?
+  
+  monday_id       String? @unique
+  contact_status  ContactStatus? @default(lead)
   phone_number    String?
 
   name            String?
@@ -83,19 +87,24 @@ enum Direction {
 }
 
 enum ChatType {
+  text
+  link
   template
   audio
   image
   video
+  document
   contact
   contacts
   location
-  link
-  document
   sticker
-  other
   media
-  text
+  other
+  reply
+  quick_reply
+
+  share
+  story_mention
 }
 
 enum Sentiment {
@@ -104,9 +113,17 @@ enum Sentiment {
   neutral
 }
 
+enum ChatSource {
+  whatsapp
+  instagram
+}
+
 model Chat {
   id            Int     @id @default(autoincrement())
-  whatsapp_id   String? @unique
+  
+  chat_source   ChatSource? @default(whatsapp)
+  source_id   String? @unique
+  
   monday_id     String? @unique
   contact_id    String
   contact       Contact @relation(fields: [contact_id], references: [id])

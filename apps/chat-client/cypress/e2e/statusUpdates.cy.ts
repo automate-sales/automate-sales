@@ -72,7 +72,8 @@ describe('Test receiving status updates', () => {
                 method: 'POST',
                 url: `${SERVER_URL}/whatsapp/message`,
                 body: {
-                    whatsapp_id: waId,
+                    chat_source: "whatsapp",
+                    source_id: waId,
                     name: "status test",
                     type: "text",
                     direction: "outgoing",

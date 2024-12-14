@@ -45,6 +45,7 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
     const [typingUser, setTypingUser] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
+    const [source, setSource] = useState<'whatsapp'|'instagram'>('whatsapp');
 
     const handleLocationClick = (): void => { console.log('Location clicked'); };
     
@@ -100,12 +101,13 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
             data.append('agent', user.email || '');
             data.append('contact_id', contactId);
             data.append('type', messageType);
+            data.append('chat_source', source);
             if(template) data.append('template', template.name)
             if(media) data.append('file', media); 
             else if (message) data.append('text', message);
             //else if (template) data.append('template', template);
             else throw new Error('No message or media to send')
-            await sendMessage(data)
+            await sendMessage(data, source)
             setTemplate(null);
             setMessage("");
             setMedia(null);
@@ -118,6 +120,12 @@ export function ChatBar({contactId, user, templates}: {contactId: string, user: 
     return (
         <div className="bg-slate-200 pt-2 pb-5 px-2 gap-2">
             <form className='flex-col' onSubmit={submitForm}>
+                <div className='w-full flex justify-end'>
+                    <select id='source-select' onChange={(ev)=> setSource(ev.target.value as 'whatsapp'|'instagram')} className="bg-gray-200 border border-gray-200 text-gray-700 py-1 px-2 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+                        <option>whatsapp</option>
+                        <option>instagram</option>
+                    </select>
+                </div>
                 <TemplatesMenu templates={templates || []} handleTemplateChange={handleTemplateChange} />
                 <div className="flex-col">
                     <div className='pb-1'>

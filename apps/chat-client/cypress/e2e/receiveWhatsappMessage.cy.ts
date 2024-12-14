@@ -156,7 +156,7 @@ describe('Test receiving messages', () => {
                 "sha256": "5d/0cJu9xLLR0cFhUvEdCVYLo6Mtrnr5QUpmB/hgLPw=",
                 "id": "672626484860429",
                 "voice": true,
-                "url": `${MEDIA_BASE_URL}/${bucketName}/media/test/audio.ogg}`
+                "url": `${MEDIA_BASE_URL}/${bucketName}/media/test/audio.ogg`
             }
         })
         before(() => {

@@ -2,7 +2,8 @@ export default [
     {
         "type": "audio",
         "direction": "incoming",
-        "whatsapp_id": "B6611423B529AF4607AA0E0E24782B33",
+        "chat_source": "whatsapp",
+        "source_id": "B6611423B529AF4607AA0E0E24782B33",
         "phone_number": "50766776677",
         "message_date": 718300102,
         "media": `${__dirname}/media/chat/audio.opus`,
@@ -12,7 +13,8 @@ export default [
     {
         "type": "document",
         "direction": "incoming",
-        "whatsapp_id": "3EB09115044BA110D44013",
+        "chat_source": "whatsapp",
+        "source_id": "3EB09115044BA110D44013",
         "phone_number": "50766776677",
         "message_date": 718302276,
         "media": `${__dirname}/media/chat/pdf.pdf`,
@@ -22,7 +24,8 @@ export default [
     {
         "type": "image",
         "direction": "incoming",
-        "whatsapp_id": "3AF00DE728CFAF4243ED",
+        "chat_source": "whatsapp",
+        "source_id": "3AF00DE728CFAF4243ED",
         "phone_number": "50766776677",
         "message_date": 718310278,
         "media": `${__dirname}/media/chat/image.jpg`,
@@ -32,7 +35,8 @@ export default [
     {
         "type": "video",
         "direction": "incoming",
-        "whatsapp_id": "3AC9FB73FB80196C7545",
+        "chat_source": "whatsapp",
+        "source_id": "3AC9FB73FB80196C7545",
         "phone_number": "50766776677",
         "message_date": 545349586,
         "media": `${__dirname}/media/chat/video.mp4`,
@@ -42,7 +46,8 @@ export default [
     {
         "type": "sticker",
         "direction": "incoming",
-        "whatsapp_id": "3A6F171193D68BC7C396",
+        "chat_source": "whatsapp",
+        "source_id": "3A6F171193D68BC7C396",
         "phone_number": "50766776677",
         "message_date": 557863465,
         "media": `${__dirname}/media/chat/sticker.mp4`,
@@ -52,7 +57,8 @@ export default [
     {
         "type": "sticker",
         "direction": "incoming",
-        "whatsapp_id": "3AD1DC95CBAF6AD51811",
+        "chat_source": "whatsapp",
+        "source_id": "3AD1DC95CBAF6AD51811",
         "phone_number": "50766776677",
         "message_date": 565936875,
         "media": `${__dirname}/media/chat/sticker.webp`,
@@ -62,7 +68,8 @@ export default [
     {
         "type": "document",
         "direction": "outgoing",
-        "whatsapp_id": "3EB0783983DD70659B0A",
+        "chat_source": "whatsapp",
+        "source_id": "3EB0783983DD70659B0A",
         "phone_number": "50766776677",
         "message_date": 638138739,
         "media": `${__dirname}/media/chat/csv.csv`,
@@ -72,7 +79,8 @@ export default [
     {
         "type": "location",
         "direction": "incoming",
-        "whatsapp_id": "3A4C47850F886ACBC7C9",
+        "chat_source": "whatsapp",
+        "source_id": "3A4C47850F886ACBC7C9",
         "phone_number": "50766776677",
         "message_date": 549166176,
         "location": {
@@ -85,7 +93,8 @@ export default [
     {
         "type": "link",
         "direction": "incoming",
-        "whatsapp_id": "3AE94336A02CC567998C",
+        "chat_source": "whatsapp",
+        "source_id": "3AE94336A02CC567998C",
         "phone_number": "50766776677",
         "message_date": 555897611,
         "link": {
@@ -97,7 +106,8 @@ export default [
     {
         "type": "text",
         "direction": "outgoing",
-        "whatsapp_id": "3A8FC24FC2AE37998C64",
+        "chat_source": "whatsapp",
+        "source_id": "3A8FC24FC2AE37998C64",
         "phone_number": "50766776677",
         "message_date": 555610541.6680498,
         "text": "Como estas?"
@@ -105,7 +115,8 @@ export default [
     {
         "type": "text",
         "direction": "outgoing",
-        "whatsapp_id": "3A8FC24FC2AE37998C64",
+        "chat_source": "whatsapp",
+        "source_id": "3A8FC24FC2AE37998C64",
         "phone_number": "50767230238",
         "message_date": 555610541.6680498,
         "text": "Que tal?"
@@ -113,7 +124,8 @@ export default [
     {
         "type": "contact",
         "direction": "outgoing",
-        "whatsapp_id": "3AF485208967B97B4F47",
+        "chat_source": "whatsapp",
+        "source_id": "3AF485208967B97B4F47",
         "phone_number": "50766776677",
         "message_date": 555909731.3794751,
         "contact_object": {
